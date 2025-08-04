@@ -2,10 +2,11 @@ import React from 'react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { formatCurrency } from '@/utils/formatCurrency';
 import StatusChip from '@/components/ui/StatusChip';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import HideableCard from '@/components/ui/HideableCard';
 import { useCardVisibility } from '@/context/CardVisibilityContext';
 import { Home, Umbrella, Calculator, Check, X, PiggyBank, ArrowRight, TrendingDown, Calendar } from 'lucide-react';
+import FinancingSimulator from '@/components/charts/FinancingSimulator';
 
 interface Strategy {
   estrategia: string;
@@ -299,10 +300,40 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
           </HideableCard>
         </div>
 
-        {/* Financial Impact */}
+        {/* Financing Simulator */}
         <div
           ref={impactCardRef as React.RefObject<HTMLDivElement>}
-          className="animate-on-scroll delay-3"
+          className="mb-10 animate-on-scroll delay-3"
+        >
+          <HideableCard
+            id="simulador-financiamento"
+            isVisible={isCardVisible("simulador-financiamento")}
+            onToggleVisibility={() => toggleCardVisibility("simulador-financiamento")}
+            hideControls={hideControls}
+          >
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold flex items-center">
+                <Calculator size={22} className="mr-2 text-accent" />
+                Simulador de Estratégias
+              </CardTitle>
+              <CardDescription>
+                Compare diferentes estratégias de aquisição do imóvel
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FinancingSimulator
+                valorImovel={imovelDesejado.objetivo?.valorImovel || 1000000}
+                onSimulationChange={(simulation) => {
+                  console.log('Simulação atualizada:', simulation);
+                }}
+              />
+            </CardContent>
+          </HideableCard>
+        </div>
+
+        {/* Financial Impact */}
+        <div
+          className="animate-on-scroll delay-4"
         >
           <HideableCard
             id="impacto-casa-praia"

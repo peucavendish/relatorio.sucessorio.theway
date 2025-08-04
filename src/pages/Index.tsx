@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import CoverPage from '@/components/sections/CoverPage';
 import FinancialSummary from '@/components/sections/FinancialSummary';
 import RetirementPlanning from '@/components/sections/RetirementPlanning';
+import TotalAssetAllocation from '@/components/sections/TotalAssetAllocation';
 import BeachHouse from '@/components/sections/BeachHouse';
 import TaxPlanning from '@/components/sections/TaxPlanning';
 import ProtectionPlanning from '@/components/sections/ProtectionPlanning';
@@ -204,6 +205,10 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
               
               <HideableSection sectionId="retirement" hideControls={clientPropect}>
                 <RetirementPlanning data={getClientData().aposentadoria} hideControls={clientPropect} />
+              </HideableSection>
+              
+              <HideableSection sectionId="total-asset-allocation" hideControls={clientPropect}>
+                <TotalAssetAllocation data={userReports} hideControls={clientPropect} />
               </HideableSection>
               
               <HideableSection sectionId="beach-house" hideControls={clientPropect}>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart, Wallet, PiggyBank, LineChart, Calculator, Calendar, ArrowRight, AlertCircle } from 'lucide-react';
+import { BarChart, Wallet, PiggyBank, LineChart, Calculator, Calendar, ArrowRight, AlertCircle, TrendingUp, Shield, Globe, Target, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import HideableCard from '@/components/ui/HideableCard';
@@ -42,7 +42,6 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
   const currentSituationRef = useScrollAnimation();
   const objetivoRef = useScrollAnimation();
   const projecaoRef = useScrollAnimation();
-  const estrategiaRef = useScrollAnimation();
 
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
   const [projectionData, setProjectionData] = React.useState<{
@@ -159,7 +158,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
                 </div>
                 <div className="mt-1">
                   <StatusChip
-                    status={(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0)) >= 0 ? "success" : "error"}
+                    status={(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0)) >= 0 ? "success" : "danger"}
                     label={(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0)) >= 0 ? "Positivo" : "Negativo"}
                   />
                 </div>
@@ -301,142 +300,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
           </HideableCard>
         </div>
 
-        <div
-          ref={estrategiaRef as React.RefObject<HTMLDivElement>}
-          className="animate-on-scroll delay-3"
-        >
-          <HideableCard
-            id="estrategia-recomendada"
-            isVisible={isCardVisible("estrategia-recomendada")}
-            onToggleVisibility={() => toggleCardVisibility("estrategia-recomendada")}
-            hideControls={hideControls}
-          >
-            <CardHeader>
-              <CardTitle className="text-xl">Estratégia Recomendada</CardTitle>
-              <CardDescription>
-                Plano para atingir seu objetivo de aposentadoria com segurança
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Alocação de Investimentos</h4>
-                  <ul className="space-y-3">
-                    {data?.alocacaoAtivos?.map((ativo, index) => (
-                      <li key={index} className="flex justify-between text-sm p-2 bg-muted/30 rounded">
-                        <span>{ativo.ativo}</span>
-                        <span className="font-medium">{ativo.percentual}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="text-sm text-muted-foreground">
-                    Perfil do investidor: <span className="font-medium">{data?.perfilInvestidor || "Moderado"}</span>
-                  </div>
-                </div>
 
-                <div className="space-y-4">
-                  <h4 className="font-medium">Ações Recomendadas</h4>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-2 p-2 bg-muted/30 rounded">
-                      <div className="bg-financial-success/20 text-financial-success p-1 rounded mt-0.5">
-                        <ArrowRight size={14} />
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium block">
-                          {projectionData.aporteMensal > (data?.excedenteMensal || 0) ? "Aumentar" : "Manter"} aportes mensais
-                        </span>
-                        <span className="text-muted-foreground">
-                          {projectionData.aporteMensal > (data?.excedenteMensal || 0) ? (
-                            <>
-                              Investir {formatCurrency(projectionData.aporteMensal - (data?.excedenteMensal || 0))}/mês a mais ({percentualAumento()}% de aumento)
-                            </>
-                          ) : (
-                            <>
-                              Seu aporte atual de {formatCurrency(data?.excedenteMensal || 0)} /mês é suficiente
-                            </>
-                          )}
-                        </span>
-                      </div>
-                    </li>
-                    {data?.possuiPGBL && (
-                      <li className="flex items-start gap-2 p-2 bg-muted/30 rounded">
-                        <div className="bg-financial-success/20 text-financial-success p-1 rounded mt-0.5">
-                          <ArrowRight size={14} />
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium block">Otimizar PGBL</span>
-                          <span className="text-muted-foreground">
-                            Aplicar {formatCurrency(data?.valorPGBL || 0)} para redução fiscal
-                          </span>
-                        </div>
-                      </li>
-                    )}
-                    <li className="flex items-start gap-2 p-2 bg-muted/30 rounded">
-                      <div className="bg-financial-success/20 text-financial-success p-1 rounded mt-0.5">
-                        <ArrowRight size={14} />
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium block">Diversificar carteira</span>
-                        <span className="text-muted-foreground">
-                          Alinhar com perfil {data?.perfilInvestidor?.toLowerCase() || "moderado"}
-                        </span>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {adequaAosCenarios() ? (
-                <div className="p-4 border border-financial-success/30 bg-financial-success/5 rounded-lg">
-                  <h4 className="font-medium text-financial-success mb-2">Projeção da Estratégia</h4>
-                  <p className="text-sm">
-                    Seguindo o plano recomendado, com um aporte mensal de {formatCurrency(getAporteRecomendado())},
-                    você pode atingir seu objetivo de aposentadoria aos {data?.idadeAposentadoria || 0} anos com uma renda mensal de{' '}
-                    {formatCurrency(data?.rendaMensalDesejada || 0)}.
-                  </p>
-                  <p className="text-sm mt-2">
-                    Seu patrimônio deverá durar até os {data?.expectativaVida || 100} anos, conforme as premissas utilizadas.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 border border-financial-warning/30 bg-financial-warning/5 rounded-lg">
-                    <div className="flex items-start gap-3 mb-2">
-                      <AlertCircle className="text-financial-warning h-5 w-5 mt-0.5 flex-shrink-0" />
-                      <h4 className="font-medium text-financial-warning">Ajustes Necessários para Viabilização</h4>
-                    </div>
-                    <p className="text-sm mb-3">
-                      Com base nas projeções, percebemos que será necessário realizar ajustes para
-                      viabilizar seu plano de aposentadoria. O cenário atual exigiria um aporte mensal de{' '}
-                      {formatCurrency(getAporteRecomendado())}, que é {calcularPorcentagemFaltante()}% maior que seu excedente atual.
-                    </p>
-                    <div className="space-y-2">
-                      <h5 className="text-sm font-medium">Alternativas a considerar:</h5>
-                      <div className="bg-white/40 p-3 rounded">
-                        <p className="text-sm font-medium">1. Aumentar o tempo para aposentadoria</p>
-                        <p className="text-xs text-muted-foreground">
-                          Postergar a aposentadoria em 5 anos pode reduzir significativamente o aporte mensal necessário.
-                        </p>
-                      </div>
-                      <div className="bg-white/40 p-3 rounded">
-                        <p className="text-sm font-medium">2. Redução da renda desejada em {calcularReducaoRendaNecessaria()}%</p>
-                        <p className="text-xs text-muted-foreground">
-                          Reduzir a renda mensal desejada para {formatCurrency(data?.rendaMensalDesejada * (1 - (calcularReducaoRendaNecessaria() / 100)) || 0)} tornaria o plano viável.
-                        </p>
-                      </div>
-                      <div className="bg-white/40 p-3 rounded">
-                        <p className="text-sm font-medium">3. Aumentar o excedente mensal</p>
-                        <p className="text-xs text-muted-foreground">
-                          Aumentar sua capacidade de poupança em {calcularPorcentagemFaltante()}% tornaria o plano viável.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </HideableCard>
-        </div>
       </div>
     </section >
   );
