@@ -150,24 +150,7 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
                         </div>
                       </div>
                     </li>
-                    <li className="flex items-start">
-                      <PiggyBank className="mr-3 text-accent mt-1" size={18} />
-                      <div>
-                        <div className="font-medium">Estratégia Recomendada</div>
-                        <div className="text-muted-foreground">
-                          {imovelDesejado.estrategiaRecomendada}
-                        </div>
-                      </div>
-                    </li>
-                    <li className="flex items-start">
-                      <Calculator className="mr-3 text-accent mt-1" size={18} />
-                      <div>
-                        <div className="font-medium">Valor Mensal</div>
-                        <div className="text-muted-foreground">
-                          {recommendedStrategy ? formatCurrency(recommendedStrategy.parcelaMensal || 0) : '-'} / mês
-                        </div>
-                      </div>
-                    </li>
+
                   </ul>
                 </div>
               </div>
@@ -176,129 +159,29 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
         </div>
 
         {/* Strategies Comparison */}
-        <div
-          ref={strategiesCardRef as React.RefObject<HTMLDivElement>}
-          className="mb-10 animate-on-scroll delay-2"
-        >
-          <HideableCard
-            id="estrategias-casa-praia"
-            isVisible={isCardVisible("estrategias-casa-praia")}
-            onToggleVisibility={() => toggleCardVisibility("estrategias-casa-praia")}
-            hideControls={hideControls}
+        {false && (
+          <div
+            ref={strategiesCardRef as React.RefObject<HTMLDivElement>}
+            className="mb-10 animate-on-scroll delay-2"
           >
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold flex items-center">
-                <Calculator size={22} className="mr-2 text-accent" />
-                Comparativo de Estratégias
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4">Estratégia</th>
-                      <th className="text-right py-3 px-4">Parcela Mensal</th>
-                      <th className="text-right py-3 px-4">Total Pago</th>
-                      <th className="text-right py-3 px-4">Tempo Contemplação</th>
-                      <th className="text-right py-3 px-4">Diferença</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {imovelDesejado.comparativoEstrategias?.map((strategy, index) => {
-                      const isRecommended = strategy.estrategia === imovelDesejado.estrategiaRecomendada;
-                      const difference = (strategy.totalPago || 0) - (imovelDesejado.objetivo?.valorImovel || 0);
-                      const percentDifference = ((difference / (imovelDesejado.objetivo?.valorImovel || 1)) * 100).toFixed(1);
-
-                      return (
-                        <tr
-                          key={index}
-                          className={`
-                            border-b border-border last:border-0 
-                            ${isRecommended ? 'bg-accent/5' : ''}
-                          `}
-                        >
-                          <td className="py-4 px-4">
-                            <div className="flex items-center">
-                              {isRecommended && (
-                                <div className="bg-accent/10 p-1 rounded-full mr-2">
-                                  <Check size={16} className="text-accent" />
-                                </div>
-                              )}
-                              <span className={isRecommended ? 'font-medium' : ''}>
-                                {strategy.estrategia}
-                              </span>
-                              {isRecommended && (
-                                <span className="ml-2 text-sm bg-accent/10 text-accent px-2 py-1 rounded-full">
-                                  Recomendado
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            {formatCurrency(strategy.parcelaMensal || 0)}
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            {formatCurrency(strategy.totalPago || 0)}
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            {strategy.tempoContemplacao}
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            <div className="flex items-center justify-end">
-                              {difference > 0 ? (
-                                <TrendingDown size={16} className="text-financial-danger mr-1" />
-                              ) : (
-                                <Check size={16} className="text-financial-success mr-1" />
-                              )}
-                              <span className={difference > 0 ? 'text-financial-danger' : 'text-financial-success'}>
-                                {difference > 0 ? `+${formatCurrency(difference)}` : 'Ideal'}
-                                {difference > 0 ? ` (+${percentDifference}%)` : ''}
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pros and Cons */}
-              <div className="grid md:grid-cols-2 gap-6 mt-8">
-                <div className="border border-border rounded-lg p-5">
-                  <h3 className="font-medium text-lg mb-4 flex items-center">
-                    <Check size={18} className="text-financial-success mr-2" />
-                    Vantagens do {imovelDesejado.estrategiaRecomendada}
-                  </h3>
-                  <ul className="space-y-2">
-                    {imovelDesejado.vantagens?.map((vantagem, i) => (
-                      <li key={i} className="flex items-center">
-                        <Check size={16} className="text-financial-success mr-2 shrink-0" />
-                        <span>{vantagem}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="border border-border rounded-lg p-5">
-                  <h3 className="font-medium text-lg mb-4 flex items-center">
-                    <X size={18} className="text-financial-danger mr-2" />
-                    Desvantagens do {imovelDesejado.estrategiaRecomendada}
-                  </h3>
-                  <ul className="space-y-2">
-                    {imovelDesejado.desvantagens?.map((desvantagem, i) => (
-                      <li key={i} className="flex items-center">
-                        <X size={16} className="text-financial-danger mr-2 shrink-0" />
-                        <span>{desvantagem}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </HideableCard>
-        </div>
+            <HideableCard
+              id="estrategias-casa-praia"
+              isVisible={isCardVisible("estrategias-casa-praia")}
+              onToggleVisibility={() => toggleCardVisibility("estrategias-casa-praia")}
+              hideControls={hideControls}
+            >
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold flex items-center">
+                  <Calculator size={22} className="mr-2 text-accent" />
+                  Comparativo de Estratégias
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* conteúdo oculto */}
+              </CardContent>
+            </HideableCard>
+          </div>
+        )}
 
         {/* Financing Simulator */}
         <div

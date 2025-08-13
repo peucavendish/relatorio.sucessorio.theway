@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import axios from 'axios';
 import SectionVisibilityControls from '@/components/layout/SectionVisibilityControls';
 import HideableSection from '@/components/ui/HideableSection';
+import SecurityIndicator from '@/components/sections/SecurityIndicator';
 
 interface IndexPageProps {
   accessor?: boolean;
@@ -45,6 +46,8 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       excedenteMensal: userReports?.financas?.resumo?.excedente_mensal || 0,
       rendas: userReports?.financas?.rendas || [],
       despesasMensais: userReports?.financas?.resumo?.despesas_mensais || 0,
+      // incluir despesas detalhadas se existirem em userReports
+      despesas: userReports?.financas?.despesas || userReports?.financas?.despesas_detalhadas || [],
       // Utilizar diretamente a composição patrimonial do JSON, sem transformação
       composicaoPatrimonial: userReports?.financas?.composicao_patrimonial || {},
       // Processar os ativos de forma dinâmica, independente do tipo
@@ -196,19 +199,21 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
             <Header />
             <main className="h-[calc(100vh-64px)] overflow-y-auto">
               <div className="min-h-screen">
-                <CoverPage clientData={getClientData().cliente} />
+                <CoverPage clientData={getClientData().cliente}>
+                  <SecurityIndicator data={getClientData().planoAcao.indicadorSegurancaFinanceira} />
+                </CoverPage>
               </div>
               
               <HideableSection sectionId="summary" hideControls={clientPropect}>
                 <FinancialSummary data={getClientData().financas} hideControls={clientPropect} />
               </HideableSection>
               
-              <HideableSection sectionId="retirement" hideControls={clientPropect}>
-                <RetirementPlanning data={getClientData().aposentadoria} hideControls={clientPropect} />
-              </HideableSection>
-              
               <HideableSection sectionId="total-asset-allocation" hideControls={clientPropect}>
                 <TotalAssetAllocation data={userReports} hideControls={clientPropect} />
+              </HideableSection>
+              
+              <HideableSection sectionId="retirement" hideControls={clientPropect}>
+                <RetirementPlanning data={getClientData().aposentadoria} hideControls={clientPropect} />
               </HideableSection>
               
               <HideableSection sectionId="beach-house" hideControls={clientPropect}>

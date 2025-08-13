@@ -6,6 +6,7 @@ import { useCardVisibility } from '@/context/CardVisibilityContext';
 import StatusChip from '@/components/ui/StatusChip';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { formatCurrency } from '@/utils/formatCurrency';
+// (Gráficos removidos desta seção)
 
 interface SuccessionPlanningProps {
   data?: any;
@@ -58,6 +59,8 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
   const economiaEstimada = data?.sucessao?.economiaITCMD?.economia || (impostoSemPlanejamento - impostoComPlanejamento);
   const percentualEconomia = data?.sucessao?.economiaITCMD?.percentualEconomia || 0;
 
+  // (Comparação de seguro movida para Proteção Patrimonial)
+
   return (
     <section className="py-16 px-4" id="succession">
       <div className="max-w-5xl mx-auto">
@@ -79,12 +82,12 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
           </div>
         </div>
 
-        {/* Objectives and Financial Impact */}
+        {/* Objectives */}
         <div
           ref={cardRef1 as React.RefObject<HTMLDivElement>}
           className="mb-8 animate-on-scroll delay-1"
         >
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6">
             {/* Objectives */}
             <HideableCard
               id="objetivos-sucessao"
@@ -115,69 +118,11 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
               </CardContent>
             </HideableCard>
 
-            {/* Financial Impact */}
-            <HideableCard
-              id="impacto-financeiro-sucessao"
-              isVisible={isCardVisible("impacto-financeiro-sucessao")}
-              onToggleVisibility={() => toggleCardVisibility("impacto-financeiro-sucessao")}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield size={20} className="text-accent" />
-                  Impacto Financeiro
-                </CardTitle>
-                <CardDescription>
-                  Economia estimada com planejamento sucessório
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Patrimônio Transmissível</p>
-                      <p className="text-2xl font-medium">{formatCurrency(patrimonioTransmissivel)}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Economia Estimada</p>
-                      <p className="text-2xl font-medium text-financial-success">
-                        {formatCurrency(economiaEstimada)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>Custo sem planejamento</span>
-                        <span className="font-medium">{formatCurrency(impostoSemPlanejamento)}</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="bg-financial-danger h-full" style={{ width: '100%' }}></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>Custo com planejamento</span>
-                        <span className="font-medium">{formatCurrency(impostoComPlanejamento)}</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="bg-financial-success h-full" style={{ width: `${100 - percentualEconomia}%` }}></div>
-                      </div>
-                    </div>
-
-                    <div className="bg-accent/10 p-3 rounded-lg">
-                      <p className="text-sm">
-                        <span className="font-medium">Redução de {percentualEconomia}%</span> nos
-                        custos sucessórios com implementação do planejamento recomendado.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </HideableCard>
+            {/* Financial Impact - removido */}
           </div>
         </div>
+
+        {/* (Comparação de seguro de vida movida para Proteção Patrimonial) */}
 
         {/* Succession Instruments */}
         <div

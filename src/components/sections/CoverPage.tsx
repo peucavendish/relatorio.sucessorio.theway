@@ -15,6 +15,7 @@ interface ClientData {
 interface CoverPageProps {
   clientData: ClientData;
   date?: string;
+  children?: React.ReactNode;
 }
 
 // Componente customizado que estende o Card básico
@@ -40,7 +41,8 @@ const CoverPage: React.FC<CoverPageProps> = ({
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
-  })
+  }),
+  children
 }) => {
   const headerRef = useScrollAnimation();
   const cardRef1 = useScrollAnimation();
@@ -138,6 +140,13 @@ const CoverPage: React.FC<CoverPageProps> = ({
             </p>
           </CardWithHighlight>
         </div>
+
+        {/* Inline children (e.g., Security Indicator) */}
+        {children && (
+          <div className="mt-6">
+            {children}
+          </div>
+        )}
       </div>
     </section>
   );

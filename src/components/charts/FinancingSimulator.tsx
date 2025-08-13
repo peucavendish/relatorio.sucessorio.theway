@@ -90,34 +90,34 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
   const [valorImovelInput, setValorImovelInput] = useState<number>(valorImovel);
   const [entrada, setEntrada] = useState<number>(valorImovel * 0.2);
   const [prazoFinanciamento, setPrazoFinanciamento] = useState<number>(30);
-  const [taxaJurosReal, setTaxaJurosReal] = useState<number>(0.096); // 9.6% ao ano real
+  const [taxaJurosReal, setTaxaJurosReal] = useState<number>(0.096); // 9.6% ao ano nominal
   const [prazoConsorcio, setPrazoConsorcio] = useState<number>(15);
   const [taxaAdministracaoConsorcio, setTaxaAdministracaoConsorcio] = useState<number>(0.18); // 18% do valor total
-  const [taxaRetornoReal, setTaxaRetornoReal] = useState<number>(0.072); // 7.2% ao ano real
+  const [taxaRetornoReal, setTaxaRetornoReal] = useState<number>(0.072); // 7.2% ao ano nominal
+  const [inccAnual, setInccAnual] = useState<number>(0.055); // INCC anual (5.5%)
 
   // Converter taxa anual para mensal
   const taxaAnualParaMensal = (taxaAnual: number) => {
     return Math.pow(1 + taxaAnual, 1/12) - 1;
   };
 
-  // Calcular financiamento SAC (Sistema de Amortização Constante)
+    // Calcular financiamento SAC (Sistema de Amortização Constante) usando taxas nominais
   const calcularFinanciamento = (): StrategyResult => {
     const valorFinanciado = Math.max(0, valorImovelInput - entrada);
-    const taxaRealMensal = taxaAnualParaMensal(taxaJurosReal);
+    const taxaNominalMensal = taxaAnualParaMensal(taxaJurosReal);
     const meses = Math.max(1, prazoFinanciamento * 12);
     
-    // Se taxa real é 0, não há juros
     if (taxaJurosReal === 0) {
       const parcelaMensal = valorFinanciado / meses;
-      const totalPago = parcelaMensal * meses;
-      const custoReal = 0; // Sem juros = sem custo real
-      
+      const totalParcelas = parcelaMensal * meses;
+      const desembolsoTotal = entrada + totalParcelas;
+    
       return {
         nome: "Financiamento SAC",
         parcelaMensal,
-        totalPago,
-        custoTotal: custoReal,
-        custoReal,
+        totalPago: desembolsoTotal,
+        custoTotal: desembolsoTotal,
+        custoReal: desembolsoTotal,
         economia: 0,
         detalhes: {
           jurosNominal: 0,
@@ -133,63 +133,66 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
     let saldoDevedor = valorFinanciado;
     let totalJuros = 0;
     
-    // Calcular juros totais
+    // Calcular juros totais nominais
     for (let i = 0; i < meses; i++) {
-      const jurosMes = saldoDevedor * taxaRealMensal;
+      const jurosMes = saldoDevedor * taxaNominalMensal;
       totalJuros += jurosMes;
       saldoDevedor -= amortizacaoMensal;
     }
     
     // Parcela inicial (maior) para mostrar na tabela
-    const parcelaInicial = amortizacaoMensal + (valorFinanciado * taxaRealMensal);
-    const totalPago = valorFinanciado + totalJuros;
-    const custoReal = totalJuros;
+    const parcelaInicial = amortizacaoMensal + (valorFinanciado * taxaNominalMensal);
+    const totalParcelas = valorFinanciado + totalJuros; // soma de todas as parcelas
+    const desembolsoTotal = entrada + totalParcelas; // entrada + parcelas
 
     return {
       nome: "Financiamento SAC",
       parcelaMensal: parcelaInicial,
-      totalPago,
-      custoTotal: custoReal,
-      custoReal,
+      totalPago: desembolsoTotal,
+      custoTotal: desembolsoTotal,
+      custoReal: desembolsoTotal,
       economia: 0,
       detalhes: {
-        jurosNominal: 0,
-        jurosReal: custoReal,
+        jurosNominal: totalJuros,
+        jurosReal: totalJuros,
         custoOportunidade: 0,
         inflacao: 0
       }
     };
   };
 
-  // Calcular consórcio com análise real
+  // Calcular consórcio com taxas nominais + INCC
   const calcularConsorcio = (): StrategyResult => {
     const meses = Math.max(1, prazoConsorcio * 12);
     
-    // Taxa administrativa realista: 15-20% do valor total
-    const taxaAdmTotal = taxaAdministracaoConsorcio; // 18% do valor total
+    // Taxa administrativa (ex.: 18% do valor total)
+    const taxaAdmTotal = taxaAdministracaoConsorcio;
     const valorTaxaAdm = valorImovelInput * taxaAdmTotal;
-    
-    // Parcela mensal = valor do imóvel + taxa administrativa / prazo
-    const parcelaMensal = (valorImovelInput + valorTaxaAdm) / meses || 0;
-    const totalPago = parcelaMensal * meses;
-    const custoReal = totalPago - valorImovelInput;
-    
-    // Custo de oportunidade do dinheiro que poderia estar investido
+
+    // INCC anual aplicado ao valor do imóvel (usuário escolhe 5% a 6% ou outro)
+    const inccFator = Math.pow(1 + inccAnual, prazoConsorcio) - 1; // crescimento acumulado
+    const custoINCC = valorImovelInput * inccFator;
+
+    // Parcela mensal nominal = (valor do imóvel + taxa adm + INCC acumulado) / meses
+    const parcelaMensal = (valorImovelInput + valorTaxaAdm + custoINCC) / meses || 0;
+    const totalParcelas = parcelaMensal * meses;
+    const desembolsoTotal = totalParcelas; // consórcio normalmente sem entrada
+    const custoNominal = desembolsoTotal;
+    // Custo de oportunidade do dinheiro que poderia estar investido (não somar no custo total)
     const custoOportunidade = valorImovelInput * (Math.pow(1 + taxaAnualParaMensal(taxaRetornoReal), meses) - 1);
-    const custoTotalReal = custoReal + custoOportunidade;
 
     return {
       nome: "Consórcio",
       parcelaMensal,
-      totalPago,
-      custoTotal: custoTotalReal,
-      custoReal: custoTotalReal,
+      totalPago: desembolsoTotal,
+      custoTotal: custoNominal,
+      custoReal: custoNominal,
       economia: 0,
       detalhes: {
-        jurosNominal: 0,
-        jurosReal: custoReal,
+        jurosNominal: custoINCC + valorTaxaAdm,
+        jurosReal: custoINCC + valorTaxaAdm,
         custoOportunidade,
-        inflacao: 0
+        inflacao: inccAnual
       }
     };
   };
@@ -202,15 +205,15 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
     const valorFuturoInvestimento = valorImovelInput * Math.pow(1 + taxaAnualParaMensal(taxaRetornoReal), meses);
     const custoOportunidade = valorFuturoInvestimento - valorImovelInput;
     
-    // Custo real = apenas o custo de oportunidade (não há juros)
-    const custoReal = custoOportunidade;
+    // Desembolso total = valor do imóvel à vista
+    const desembolsoTotal = valorImovelInput;
 
     return {
       nome: "Compra à Vista",
       parcelaMensal: 0,
-      totalPago: valorImovelInput,
-      custoTotal: custoReal,
-      custoReal,
+      totalPago: desembolsoTotal,
+      custoTotal: desembolsoTotal + custoOportunidade,
+      custoReal: desembolsoTotal + custoOportunidade,
       economia: 0,
       detalhes: {
         jurosNominal: 0,
@@ -227,12 +230,12 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
     const consorcio = calcularConsorcio();
     const compraVista = calcularCompraVista();
 
-    // Calcular economia relativa baseada no custo REAL
-    const menorCustoReal = Math.min(financiamento.custoReal, consorcio.custoReal, compraVista.custoReal);
+    // Calcular economia relativa baseada no CUSTO TOTAL
+    const menorCusto = Math.min(financiamento.custoTotal, consorcio.custoTotal, compraVista.custoTotal);
     
-    financiamento.economia = financiamento.custoReal - menorCustoReal;
-    consorcio.economia = consorcio.custoReal - menorCustoReal;
-    compraVista.economia = compraVista.custoReal - menorCustoReal;
+    financiamento.economia = financiamento.custoTotal - menorCusto;
+    consorcio.economia = consorcio.custoTotal - menorCusto;
+    compraVista.economia = compraVista.custoTotal - menorCusto;
 
     return { financiamento, consorcio, compraVista };
   };
@@ -249,13 +252,13 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
   return (
     <Card className="w-full h-full border-border/80 shadow-sm">
       <CardHeader className="px-6 pb-0">
-        <div className="flex flex-col w-full gap-4">
-          <div>
-            <CardTitle className="text-xl font-semibold">Simulador de Estratégias (Taxas Reais)</CardTitle>
-            <CardDescription className="mt-1">
-              Comparação baseada em taxas reais e custo de oportunidade
-            </CardDescription>
-          </div>
+                  <div className="flex flex-col w-full gap-4">
+            <div>
+              <CardTitle className="text-xl font-semibold">Simulador de Estratégias (Taxas Nominais)</CardTitle>
+              <CardDescription className="mt-1">
+                Comparação com juros nominais; no consórcio, INCC ajustável incluído
+              </CardDescription>
+            </div>
 
           {/* Controles */}
           <div className="grid md:grid-cols-3 gap-4 mb-6">
@@ -293,7 +296,7 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
             </div>
           </div>
 
-          <div className="grid md:grid-cols-1 gap-4 mb-6">
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="space-y-2">
               <Label htmlFor="prazoConsorcio">Prazo Consórcio (anos)</Label>
               <Input
@@ -306,36 +309,54 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
                 className="h-9"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="inccAnual">INCC Anual</Label>
+              <div className="flex items-center gap-2">
+                <Slider
+                  id="inccAnual"
+                  value={[inccAnual * 100]}
+                  min={0}
+                  max={12}
+                  step={0.1}
+                  onValueChange={(value) => setInccAnual(value[0] / 100)}
+                  className="flex-1"
+                />
+                <div className="w-12 text-center text-sm font-medium">
+                  {(inccAnual * 100).toFixed(1)}%
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Histórico ~5%–6% a.a. (ajustável)</p>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div className="space-y-2">
-              <Label htmlFor="taxaRetornoReal">Taxa Real de Investimentos</Label>
+                        <div className="space-y-2">
+              <Label htmlFor="taxaRetornoReal">Taxa Nominal de Investimentos</Label>
               <div className="flex items-center gap-2">
                 <Slider
                   id="taxaRetornoReal"
                   value={[taxaRetornoReal * 100]}
                   min={0}
-                  max={10}
+                  max={20}
                   step={0.1}
                   onValueChange={(value) => setTaxaRetornoReal(value[0] / 100)}
                   className="flex-1"
                 />
-                <div className="w-12 text-center text-sm font-medium">
+                <div className="w-16 text-center text-sm font-medium">
                   {(taxaRetornoReal * 100).toFixed(1)}%
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Custo de oportunidade anual</p>
+              <p className="text-xs text-muted-foreground">Retorno nominal anual</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="taxaJurosReal">Taxa Real do Financiamento</Label>
+              <Label htmlFor="taxaJurosReal">Taxa Nominal do Financiamento</Label>
               <div className="flex items-center gap-2">
                 <Slider
                   id="taxaJurosReal"
                   value={[taxaJurosReal * 100]}
                   min={0}
-                  max={10}
+                  max={20}
                   step={0.1}
                   onValueChange={(value) => setTaxaJurosReal(value[0] / 100)}
                   className="flex-1"
@@ -344,7 +365,7 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
                   {(taxaJurosReal * 100).toFixed(1)}%
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Juros reais anuais</p>
+              <p className="text-xs text-muted-foreground">Juros nominais anuais</p>
             </div>
 
             <div className="space-y-2">
@@ -377,7 +398,7 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
               <tr>
                 <th className="py-2 px-3 text-left font-medium">Estratégia</th>
                 <th className="py-2 px-3 text-right font-medium">Parcela Mensal</th>
-                <th className="py-2 px-3 text-right font-medium">Custo Real</th>
+                <th className="py-2 px-3 text-right font-medium">Custo Total</th>
                 <th className="py-2 px-3 text-right font-medium">Melhor Opção</th>
               </tr>
             </thead>
@@ -386,21 +407,21 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
                 {
                   estrategia: 'Financiamento',
                   parcelaMensal: estrategias.financiamento.parcelaMensal || 0,
-                  custoReal: estrategias.financiamento.custoReal || 0,
+                  custoTotal: estrategias.financiamento.custoTotal || 0,
                   economia: estrategias.financiamento.economia || 0,
                   detalhes: estrategias.financiamento.detalhes
                 },
                 {
                   estrategia: 'Consórcio',
                   parcelaMensal: estrategias.consorcio.parcelaMensal || 0,
-                  custoReal: estrategias.consorcio.custoReal || 0,
+                  custoTotal: estrategias.consorcio.custoTotal || 0,
                   economia: estrategias.consorcio.economia || 0,
                   detalhes: estrategias.consorcio.detalhes
                 },
                 {
                   estrategia: 'Compra à Vista',
                   parcelaMensal: 0,
-                  custoReal: estrategias.compraVista.custoReal || 0,
+                  custoTotal: estrategias.compraVista.custoTotal || 0,
                   economia: estrategias.compraVista.economia || 0,
                   detalhes: estrategias.compraVista.detalhes
                 }
@@ -410,7 +431,7 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
                   <td className="py-2 px-3 text-right">
                     {estrategia.parcelaMensal > 0 ? formatCurrency(estrategia.parcelaMensal) : '-'}
                   </td>
-                  <td className="py-2 px-3 text-right">{formatCurrency(estrategia.custoReal)}</td>
+                  <td className="py-2 px-3 text-right">{formatCurrency(estrategia.custoTotal)}</td>
                   <td className="py-2 px-3 text-right">
                     <span className={estrategia.economia === 0 ? 'text-green-600 font-medium' : 'text-red-600'}>
                       {estrategia.economia === 0 ? '✓ Melhor' : `+${formatCurrency(estrategia.economia)}`}
@@ -424,19 +445,20 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
 
         {/* Detalhes da análise */}
         <div className="mt-6 p-4 bg-muted/20 rounded-lg">
-          <h3 className="font-medium mb-3">Detalhes da Análise</h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p><strong>Taxa Real Financiamento:</strong> {(taxaJurosReal * 100).toFixed(1)}% a.a.</p>
-              <p><strong>Taxa Adm. Consórcio:</strong> {(taxaAdministracaoConsorcio * 100).toFixed(1)}% do valor total</p>
-            </div>
-            <div>
-              <p><strong>Custo de Oportunidade:</strong> {(taxaRetornoReal * 100).toFixed(1)}% a.a. real</p>
-              <p><strong>Período de Análise:</strong> {prazoFinanciamento} anos</p>
-              <p><strong>Valor do Imóvel:</strong> {formatCurrency(valorImovelInput)}</p>
-              <p><strong>Entrada:</strong> {formatCurrency(entrada)}</p>
-            </div>
-          </div>
+                        <h3 className="font-medium mb-3">Detalhes da Análise</h3>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p><strong>Taxa Nominal Financiamento:</strong> {(taxaJurosReal * 100).toFixed(1)}% a.a.</p>
+                  <p><strong>Taxa Adm. Consórcio:</strong> {(taxaAdministracaoConsorcio * 100).toFixed(1)}% do valor total</p>
+                  <p><strong>INCC (consórcio):</strong> {(inccAnual * 100).toFixed(1)}% a.a.</p>
+                </div>
+                <div>
+                  <p><strong>Retorno Nominal (oportunidade):</strong> {(taxaRetornoReal * 100).toFixed(1)}% a.a.</p>
+                  <p><strong>Período de Análise:</strong> {prazoFinanciamento} anos</p>
+                  <p><strong>Valor do Imóvel:</strong> {formatCurrency(valorImovelInput)}</p>
+                  <p><strong>Entrada:</strong> {formatCurrency(entrada)}</p>
+                </div>
+              </div>
         </div>
       </CardContent>
     </Card>

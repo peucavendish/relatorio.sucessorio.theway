@@ -1,19 +1,20 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import HideableCard from '@/components/ui/HideableCard';
 import StatusChip from '@/components/ui/StatusChip';
-import DonutChart from '@/components/charts/DonutChart';
 import ProgressBar from '@/components/ui/ProgressBar';
-import { TrendingUp, TrendingDown, DollarSign, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useCardVisibility } from '@/context/CardVisibilityContext';
+import { Card } from '@/components/ui/card';
 
 interface FinanceSummary {
   patrimonioLiquido: number;
   excedenteMensal: number;
-  rendas: Array<{ fonte: string; valor: number; tributacao: string }>;
+  rendas: Array<{ fonte?: string; descricao?: string; valor: number; tributacao?: string }>;
   despesasMensais: number;
+  // Lista detalhada de despesas (quando disponível)
+  despesas?: Array<{ descricao?: string; categoria?: string; tipo?: string; item?: string; valor: number }>;
   composicaoPatrimonial: Record<string, number>;
   ativos: Array<{ tipo: string; valor: number; classe?: string }>;
   passivos: Array<{ tipo: string; valor: number }>;
@@ -24,65 +25,24 @@ interface FinancialSummaryProps {
   hideControls?: boolean;
 }
 
-// Cores para diferentes tipos de ativos
-const assetColors: Record<string, string> = {
-  'Imóveis': '#60A5FA',         // Azul
-  'Investimentos': '#34D399',   // Verde
-  'Participação em empresa': '#A78BFA', // Roxo
-  'Outros': '#F59E0B',          // Amarelo
-  'Veículos': '#EF4444',        // Vermelho
-  'Obras de arte': '#EC4899',   // Rosa
-  'Joias': '#8B5CF6',           // Índigo
-  'Colecionáveis': '#F97316',   // Laranja
-};
-
-// Função para obter uma cor baseada no tipo de ativo ou gerar uma se não existir
-const getColorForAssetType = (assetType: string): string => {
-  if (assetType in assetColors) {
-    return assetColors[assetType];
-  }
-
-  // Gera uma cor para tipos não mapeados
-  const hash = assetType.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-  const hue = hash % 360;
-  return `hsl(${hue}, 70%, 60%)`;
-};
 
 const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls }) => {
   const headerRef = useScrollAnimation();
   const summaryCardRef = useScrollAnimation();
-  const patrimonioCardRef = useScrollAnimation();
   const incomeExpenseCardRef = useScrollAnimation();
-  const assetsCardRef = useScrollAnimation();
-  const liabilitiesCardRef = useScrollAnimation();
 
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
 
   // Calculate total income from all sources
   const totalIncome = data.rendas.reduce((sum, renda) => sum + renda.valor, 0);
 
-  // Calculate total assets and liabilities
-  const totalAssets = data.ativos.reduce((sum, asset) => sum + asset.valor, 0);
-  const totalLiabilities = data.passivos.reduce((sum, liability) => sum + liability.valor, 0);
 
-  // Calculate total composition for normalization
-  // Soma todos os valores da composição patrimonial
-  const totalComposition = Object.values(data.composicaoPatrimonial).reduce((sum, value) => sum + value, 0);
-
-  // Prepare data for the composition chart
-  // Cria um array com todas as categorias presentes na composição patrimonial
-  const compositionChartData = Object.entries(data.composicaoPatrimonial).map(([key, value]) => ({
-    name: key,
-    value: totalComposition > 0 ? Math.round((value / totalComposition) * 100) : 0,
-    color: getColorForAssetType(key),
-    rawValue: formatCurrency(value)
-  }));
-
-  // Get income by source for display
-  const getIncomeBySource = (source: string) => {
-    const renda = data.rendas.find(r => r.fonte === source);
-    return renda ? renda.valor : 0;
-  };
+  // Valores derivados (mensal x anual)
+  const totalIncomeAnnual = totalIncome * 12;
+  const totalExpensesMonthly = data.despesasMensais;
+  const totalExpensesAnnual = totalExpensesMonthly * 12;
+  const surplusMonthly = data.excedenteMensal;
+  const surplusAnnual = surplusMonthly * 12;
 
   return (
     <section className="py-16 px-4" id="summary">
@@ -117,7 +77,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
             onToggleVisibility={() => toggleCardVisibility("financial-resumo")}
             hideControls={hideControls}
           >
-            <div className="grid md:grid-cols-3 gap-6 p-8">
+            <div className="grid md:grid-cols-3 gap-6 p-10">
               <div className="text-center">
                 <h3 className="text-muted-foreground text-sm mb-1">Investimentos Financeiros</h3>
                 <div className="text-3xl font-bold mb-1">
@@ -135,16 +95,17 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
               </div>
 
               <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Renda Mensal</h3>
+                <h3 className="text-muted-foreground text-sm mb-1">Renda Esperada (12 meses)</h3>
                 <div className="text-3xl font-bold mb-1">
-                  {formatCurrency(totalIncome)}
+                  {formatCurrency(totalIncomeAnnual)}
                 </div>
+                <div className="text-xs text-muted-foreground mb-2">{formatCurrency(totalIncome)} / mês</div>
                 <div className="flex justify-center gap-2 flex-wrap">
                   {data.rendas.map((renda, index) => (
                     <StatusChip
                       key={index}
                       status={renda.tributacao === 'Isento' ? 'success' : 'info'}
-                      label={`${renda.fonte}: ${formatCurrency(renda.valor)}`}
+                      label={`${renda.descricao || renda.fonte || 'Renda'}: ${formatCurrency(renda.valor)} /mês`}
                       className="text-xs"
                     />
                   ))}
@@ -152,14 +113,15 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
               </div>
 
               <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Excedente Mensal</h3>
+                <h3 className="text-muted-foreground text-sm mb-1">Excedente Esperado (12 meses)</h3>
                 <div className="text-3xl font-bold mb-1">
-                  {formatCurrency(data.excedenteMensal)}
+                  {formatCurrency(surplusAnnual)}
                 </div>
+                <div className="text-xs text-muted-foreground mb-2">{formatCurrency(surplusMonthly)} / mês</div>
                 <StatusChip
-                  status={data.excedenteMensal > 0 ? "success" : "danger"}
-                  label={data.excedenteMensal > 0 ? "Positivo" : "Negativo"}
-                  icon={data.excedenteMensal > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  status={surplusMonthly > 0 ? 'success' : 'danger'}
+                  label={surplusMonthly > 0 ? 'Positivo' : 'Negativo'}
+                  icon={surplusMonthly > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 />
               </div>
             </div>
@@ -171,19 +133,22 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
           ref={incomeExpenseCardRef as React.RefObject<HTMLDivElement>}
           className="mb-10 animate-on-scroll delay-1"
         >
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-1 gap-6">
             <HideableCard
               id="renda-despesas"
               isVisible={isCardVisible("renda-despesas")}
               onToggleVisibility={() => toggleCardVisibility("renda-despesas")}
               hideControls={hideControls}
             >
-              <div className="p-8">
-                <h3 className="text-xl font-semibold mb-4">Renda vs. Despesas</h3>
+              <div className="p-10">
+                <h3 className="text-2xl font-semibold mb-4">Renda vs. Despesas</h3>
                 <div className="mb-6">
                   <div className="flex justify-between mb-2">
                     <span>Renda Total</span>
-                    <span className="font-medium">{formatCurrency(totalIncome)}</span>
+                    <div className="flex items-center gap-6">
+                      <span className="font-medium">{formatCurrency(totalIncome)} / mês</span>
+                      <span className="font-medium text-muted-foreground">{formatCurrency(totalIncomeAnnual)} / ano</span>
+                    </div>
                   </div>
                   <ProgressBar
                     value={totalIncome}
@@ -196,159 +161,85 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 <div className="mb-2">
                   <div className="flex justify-between mb-2">
                     <span>Despesas</span>
-                    <span className="font-medium">{formatCurrency(data.despesasMensais)}</span>
+                    <div className="flex items-center gap-6">
+                      <span className="font-medium">{formatCurrency(totalExpensesMonthly)} / mês</span>
+                      <span className="font-medium text-muted-foreground">{formatCurrency(totalExpensesAnnual)} / ano</span>
+                    </div>
                   </div>
                   <ProgressBar
-                    value={data.despesasMensais}
+                    value={totalExpensesMonthly}
                     max={totalIncome}
                     size="lg"
-                    color={data.despesasMensais > totalIncome ? "danger" : "warning"}
+                    color={totalExpensesMonthly > totalIncome ? 'danger' : 'warning'}
                   />
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
                   <div>
-                    <span className="text-sm text-muted-foreground">Excedente Mensal</span>
+                    <span className="text-sm text-muted-foreground">Excedente Esperado</span>
                     <div className="text-xl font-semibold">
-                      {formatCurrency(data.excedenteMensal)}
+                      {formatCurrency(surplusMonthly)} / mês
                     </div>
+                    <div className="text-xs text-muted-foreground">{formatCurrency(surplusAnnual)} / ano</div>
                   </div>
                   <StatusChip
-                    status={data.excedenteMensal > 0 ? "success" : "danger"}
-                    label={`${totalIncome > 0 ? Math.round((data.excedenteMensal / totalIncome) * 100) : 0}% da renda`}
+                    status={surplusMonthly > 0 ? 'success' : 'danger'}
+                    label={`${totalIncome > 0 ? Math.round((surplusMonthly / totalIncome) * 100) : 0}% da renda`}
                   />
                 </div>
-              </div>
-            </HideableCard>
 
-            <HideableCard
-              id="composicao-patrimonial"
-              isVisible={isCardVisible("composicao-patrimonial")}
-              onToggleVisibility={() => toggleCardVisibility("composicao-patrimonial")}
-              hideControls={hideControls}
-            >
-              <div className="p-6">
-                <h3 className="text-xl font-semibold mb-3">Composição Patrimonial</h3>
-                <DonutChart
-                  data={compositionChartData}
-                  height={160}
-                  innerRadius={45}
-                  outerRadius={65}
-                />
-              </div>
-            </HideableCard>
-          </div>
-        </div>
-
-        {/* Assets & Liabilities */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div
-            ref={assetsCardRef as React.RefObject<HTMLDivElement>}
-            className="animate-on-scroll delay-2"
-          >
-            <HideableCard
-              id="ativos"
-              isVisible={isCardVisible("ativos")}
-              onToggleVisibility={() => toggleCardVisibility("ativos")}
-              hideControls={hideControls}
-            >
-              <div className="p-8">
-                <h3 className="text-xl font-semibold mb-4">Ativos</h3>
-                <div className="space-y-4">
-                  {data.ativos.map((asset, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span>{asset.tipo}{asset.classe ? ` - ${asset.classe}` : ''}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{formatCurrency(asset.valor)}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({totalAssets > 0 ? Math.round((asset.valor / totalAssets) * 100) : 0}%)
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="pt-4 border-t border-border flex justify-between items-center">
-                    <span className="font-semibold">Total de Ativos</span>
-                    <span className="font-semibold">{formatCurrency(totalAssets)}</span>
-                  </div>
-                </div>
-              </div>
-            </HideableCard>
-          </div>
-
-          <div
-            ref={liabilitiesCardRef as React.RefObject<HTMLDivElement>}
-            className="animate-on-scroll delay-3"
-          >
-            <HideableCard
-              id="passivos"
-              isVisible={isCardVisible("passivos")}
-              onToggleVisibility={() => toggleCardVisibility("passivos")}
-              hideControls={hideControls}
-            >
-              <div className="p-8">
-                <h3 className="text-xl font-semibold mb-4">Passivos</h3>
-                {data.passivos && data.passivos.length > 0 ? (
-                  <div className="space-y-4">
-                    {data.passivos.map((liability, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <span>{liability.tipo}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{formatCurrency(liability.valor)}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({totalLiabilities > 0 ? Math.round((liability.valor / totalLiabilities) * 100) : 0}%)
-                          </span>
+                {/* Detalhamento de Rendas e Despesas */}
+                <div className="mt-6 grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium mb-2">Detalhe das Rendas</h4>
+                    <div className="space-y-2">
+                      {data.rendas.map((renda, index) => (
+                        <div key={index} className="flex justify-between items-start">
+                          <div className="text-sm">
+                            <div className="font-medium">{renda.descricao || renda.fonte || 'Renda'}</div>
+                            {renda.tributacao && (
+                              <div className="text-xs text-muted-foreground">{renda.tributacao}</div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <div className="text-sm font-medium">{formatCurrency(renda.valor)} / mês</div>
+                            <div className="text-sm font-medium text-muted-foreground">{formatCurrency((renda as any)?.valorAnual ?? (renda.valor * 12))} / ano</div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    <div className="pt-4 border-t border-border flex justify-between items-center">
-                      <span className="font-semibold">Total de Passivos</span>
-                      <span className="font-semibold">{formatCurrency(totalLiabilities)}</span>
+                      ))}
                     </div>
                   </div>
-                ) : (
-                  <div className="py-6 text-center">
-                    <p className="text-muted-foreground">Nenhum passivo registrado</p>
+                  <div>
+                    <h4 className="font-medium mb-2">Detalhe das Despesas</h4>
+                    {data.despesas && data.despesas.length > 0 ? (
+                      <div className="space-y-2">
+                        {data.despesas.map((despesa, index) => (
+                          <div key={index} className="flex justify-between items-start">
+                            <div className="text-sm">
+                              <div className="font-medium">{despesa.descricao || despesa.categoria || despesa.tipo || despesa.item || 'Despesa'}</div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                              <div className="text-sm font-medium">{formatCurrency(despesa.valor)} / mês</div>
+                              <div className="text-sm font-medium text-muted-foreground">{formatCurrency((despesa as any)?.valorAnual ?? (despesa.valor * 12))} / ano</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Sem detalhes cadastrados</p>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </HideableCard>
+
+            {/* Composição Patrimonial movida para Gestão de Ativos */}
           </div>
         </div>
 
-        {/* Patrimonio */}
-        <div
-          ref={patrimonioCardRef as React.RefObject<HTMLDivElement>}
-          className="animate-on-scroll delay-4 pt-8"
-        >
-          <HideableCard
-            id="patrimonio-resumo"
-            isVisible={isCardVisible("patrimonio-resumo")}
-            onToggleVisibility={() => toggleCardVisibility("patrimonio-resumo")}
-            hideControls={hideControls}
-          >
-            <div className="grid md:grid-cols-3 gap-6 p-8">
-              <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Total de Ativos</h3>
-                <div className="text-3xl font-bold mb-1">
-                  {formatCurrency(data.ativos.reduce((sum, asset) => sum + asset.valor, 0))}
-                </div>
-              </div>
+        {/* Assets & Liabilities movidos para a seção Gestão de Ativos */}
 
-              <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Total de passivos</h3>
-                <div className="text-3xl font-bold mb-1">
-                  {formatCurrency(data.passivos.reduce((sum, liability) => sum + liability.valor, 0))}
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Patrimônio Líquido</h3>
-                <div className="text-3xl font-bold mb-1">
-                  {formatCurrency(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0) )}
-                </div>
-              </div>
-            </div>
-          </HideableCard>
-        </div>
+        {/* Patrimônio movido para a seção Gestão de Ativos */}
       </div>
     </section>
   );
