@@ -68,12 +68,56 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
   }
 
   // Mapear próximos passos usando os dados do JSON
-  const cronograma = data.planoAcao.cronograma.map((item: any, index: number) => ({
-    periodo: `Passo ${index + 1}`,
-    objetivoPrincipal: item.objetivoPrincipal || '',
-    descricao: item.etapa,
-    acoes: [item.acao]
-  }));
+  const cronograma = [
+    {
+      titulo: "Projetos Imobilizados",
+      descricao: "Estruturação e otimização de investimentos em imóveis",
+      icone: "🏠",
+      cor: "bg-blue-500/10 text-blue-600 border-blue-200",
+      acoes: [
+        "Análise da carteira imobiliária atual",
+        "Identificação de oportunidades de otimização",
+        "Estruturação de novos investimentos",
+        "Monitoramento de performance"
+      ]
+    },
+    {
+      titulo: "Proteção Patrimonial",
+      descricao: "Implementação de estratégias para proteção do patrimônio",
+      icone: "🛡️",
+      cor: "bg-green-500/10 text-green-600 border-green-200",
+      acoes: [
+        "Constituição de holding patrimonial",
+        "Estruturação de proteções jurídicas",
+        "Implementação de seguros adequados",
+        "Revisão de estruturas societárias"
+      ]
+    },
+    {
+      titulo: "Diagnóstico de Alocação",
+      descricao: "Análise e reestruturação da alocação de investimentos",
+      icone: "📊",
+      cor: "bg-purple-500/10 text-purple-600 border-purple-200",
+      acoes: [
+        "Análise da carteira atual",
+        "Definição de nova alocação estratégica",
+        "Implementação das mudanças",
+        "Monitoramento contínuo"
+      ]
+    },
+    {
+      titulo: "Sucessório e Tributário",
+      descricao: "Planejamento sucessório e otimização tributária",
+      icone: "⚖️",
+      cor: "bg-orange-500/10 text-orange-600 border-orange-200",
+      acoes: [
+        "Elaboração de testamento",
+        "Estruturação de doações em vida",
+        "Otimização tributária",
+        "Proteção sucessória"
+      ]
+    }
+  ];
 
   // Verifica se o cliente precisa de uma holding familiar
   const precisaHolding = () => {
@@ -189,50 +233,41 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
           className="max-w-5xl mx-auto mb-8 animate-on-scroll"
         >
           <h3 className="text-xl font-semibold mb-6">Próximos Passos</h3>
-          <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {cronograma.map((fase, index) => (
-              <div key={index} className="mb-8 md:mb-10">
-                <div className="flex flex-col md:flex-row gap-4 md:gap-8">
-                  <div className="md:w-1/4">
-                    <CardWithHighlight highlight={index === 0} className={index === 0 ? 'border-accent' : ''}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-5 w-5 text-accent" />
-                          <h4 className="font-semibold">{fase.periodo}</h4>
-                        </div>
-                        {fase.objetivoPrincipal && (
-                          <p className="text-sm text-muted-foreground">{fase.objetivoPrincipal}</p>
-                        )}
-                      </CardContent>
-                    </CardWithHighlight>
+              <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-2 hover:border-accent/50">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-full ${fase.cor} border-2`}>
+                      <span className="text-2xl">{fase.icone}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium bg-accent/10 text-accent px-2 py-1 rounded-full">
+                          Passo {index + 1}
+                        </span>
+                      </div>
+                      <CardTitle className="text-lg font-bold">{fase.titulo}</CardTitle>
+                      <CardDescription className="mt-1">{fase.descricao}</CardDescription>
+                    </div>
                   </div>
-                  <div className="md:w-3/4">
-                    <Card>
-                      <CardContent className="p-4">
-                        <p className="mb-3 font-medium">{fase.descricao}</p>
-                        <ul className="space-y-2">
-                          {fase.acoes.map((acao, i) => (
-                            <li key={i} className="flex items-start gap-2">
-                              <ArrowRight className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
-                              <span>{acao}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-4">
-                          <Button asChild size="sm">
-                            <a href={specialistUrl} target="_blank" rel="noopener noreferrer">
-                              Acionamento do Especialista
-                            </a>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-                {index < cronograma.length - 1 && (
-                  <div className="hidden md:block h-8 w-0.5 bg-border mx-auto my-0"></div>
-                )}
-              </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ul className="space-y-2 mb-4">
+                    {fase.acoes.map((acao, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <div className="w-2 h-2 rounded-full bg-accent mt-2 flex-shrink-0"></div>
+                        <span className="text-sm text-muted-foreground">{acao}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild size="sm" className="w-full group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
+                    <a href={specialistUrl} target="_blank" rel="noopener noreferrer">
+                      Acionamento do Especialista
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
