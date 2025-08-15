@@ -140,7 +140,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
               onToggleVisibility={() => toggleCardVisibility("renda-despesas")}
               hideControls={hideControls}
             >
-              <div>
+              <div className="md:p-8">
                 <h3 className="card-title-standard">Renda vs. Despesas</h3>
                 <div className="card-progress-container">
                   <div className="card-progress-header">

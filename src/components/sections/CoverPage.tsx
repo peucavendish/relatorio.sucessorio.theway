@@ -26,7 +26,7 @@ const CardWithHighlight = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm p-6",
+      "rounded-lg border bg-card text-card-foreground shadow-sm md:p-8",
       highlight && "border-accent/50 bg-accent/5",
       className
     )}

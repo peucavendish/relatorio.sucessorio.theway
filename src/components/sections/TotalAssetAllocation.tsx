@@ -81,8 +81,8 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
     ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
     : 0;
   const excedenteMensal = ((Array.isArray(data?.financas?.rendas)
-      ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
-      : 0) - data.financas.resumo.despesas_mensais) || 0;
+    ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+    : 0) - data.financas.resumo.despesas_mensais) || 0;
   const poupanca = rendaTotal > 0 ? Number(((excedenteMensal / rendaTotal) * 100).toFixed(2)) : 0;
   // Corrige despesasMensais: usa resumo.despesas_mensais se existir, senão soma todas as rendas
   const despesasMensais =
@@ -96,7 +96,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
     : 0;
   const horizonteCobertura = despesasMensais > 0 ? Number((investimentos / (12 * despesasMensais)).toFixed(2)) : 0;
 
-   
+
 
   return (
     <section className="min-h-screen py-16 px-4" id="total-asset-allocation">
@@ -214,7 +214,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                 Análise técnica e recomendações para otimização patrimonial
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent>
               {/* Composição Patrimonial */}
               {compositionChartData && compositionChartData.length > 0 && (
                 <div className="mb-8">
