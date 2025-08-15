@@ -41,8 +41,8 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
   const totalIncomeAnnual = totalIncome * 12;
   const totalExpensesMonthly = data.despesasMensais;
   const totalExpensesAnnual = totalExpensesMonthly * 12;
-  const surplusMonthly = data.excedenteMensal;
-  const surplusAnnual = surplusMonthly * 12;
+  const surplusMonthly = (totalIncomeAnnual - totalExpensesAnnual) / 12;
+  const surplusAnnual = totalIncomeAnnual - totalExpensesAnnual;
 
   return (
     <section className="py-16 px-4" id="summary">

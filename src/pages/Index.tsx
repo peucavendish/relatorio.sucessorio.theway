@@ -43,7 +43,9 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     },
     financas: {
       patrimonioLiquido: userReports?.financas?.resumo?.patrimonio_liquido || 0,
-      excedenteMensal: userReports?.financas?.resumo?.excedente_mensal || 0,
+      excedenteMensal: ((Array.isArray(userReports?.financas?.rendas)
+      ? userReports.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+      : 0) - userReports.financas.resumo.despesas_mensais) || 0,
       rendas: userReports?.financas?.rendas || [],
       despesasMensais: userReports?.financas?.resumo?.despesas_mensais || 0,
       // incluir despesas detalhadas se existirem em userReports
@@ -60,7 +62,9 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     },
     aposentadoria: {
       patrimonioLiquido: userReports?.financas?.resumo?.patrimonio_liquido || 0,
-      excedenteMensal: userReports?.financas?.resumo?.excedente_mensal || 0,
+      excedenteMensal: ((Array.isArray(userReports?.financas?.rendas)
+      ? userReports.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+      : 0) - userReports.financas.resumo.despesas_mensais) || 0,
       totalInvestido: userReports?.financas?.composicao_patrimonial?.Investimentos || 0,
       ativos: userReports?.financas?.ativos?.map(a => ({
         tipo: a.tipo,
@@ -200,7 +204,13 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
             <main className="h-[calc(100vh-64px)] overflow-y-auto">
               <div className="min-h-screen">
                 <CoverPage clientData={getClientData().cliente}>
-                  <SecurityIndicator data={getClientData().planoAcao.indicadorSegurancaFinanceira} />
+                  <SecurityIndicator
+                    scoreFinanceiro={{
+                      pilar: 'Total Geral',
+                      notaPonderada: userReports?.scoreFinanceiro?.find?.(s => s.Pilar === 'Total Geral')?.['Nota Ponderada'] ?? 0,
+                      elementosAvaliados: userReports?.scoreFinanceiro?.filter?.(s => s.Pilar !== 'Total Geral').map(s => s.Pilar) ?? []
+                    }}
+                  />
                 </CoverPage>
               </div>
               

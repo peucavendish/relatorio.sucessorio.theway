@@ -80,9 +80,17 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const rendaTotal = Array.isArray(data?.financas?.rendas)
     ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
     : 0;
-  const excedenteMensal = Number(data?.financas?.resumo?.excedente_mensal) || 0;
+  const excedenteMensal = ((Array.isArray(data?.financas?.rendas)
+      ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+      : 0) - data.financas.resumo.despesas_mensais) || 0;
   const poupanca = rendaTotal > 0 ? Number(((excedenteMensal / rendaTotal) * 100).toFixed(2)) : 0;
-  const despesasMensais = Number(data?.financas?.resumo?.despesas_mensais) || 0;
+  // Corrige despesasMensais: usa resumo.despesas_mensais se existir, senão soma todas as rendas
+  const despesasMensais =
+    Number(data?.financas?.resumo?.despesas_mensais) ||
+    (Array.isArray(data?.financas?.rendas)
+      ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+      : 0);
+
   const investimentos = Array.isArray(data?.financas?.ativos)
     ? data.financas.ativos.filter((a: any) => a?.tipo === 'Investimentos').reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0)
     : 0;

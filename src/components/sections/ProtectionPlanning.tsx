@@ -177,7 +177,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                       <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex gap-2"><span className="text-accent">•</span> Previdência VGBL/PGBL: recursos direcionados aos beneficiários, tipicamente fora do inventário, com liquidez direta.</li>
                         <li className="flex gap-2"><span className="text-accent">•</span> Seguro de Vida: pagamento direto aos beneficiários, fora do inventário; pode complementar o custo sucessório.</li>
-                        <li className="flex gap-2"><span className="text-accent">•</span> Cobertura de seguro sugerida: <span className="font-medium text-foreground">{formatCurrency(coberturaSeguroSugerida)}</span></li>
+                        {/* <li className="flex gap-2"><span className="text-accent">•</span> Cobertura de seguro sugerida: <span className="font-medium text-foreground">{formatCurrency(coberturaSeguroSugerida)}</span></li> */}
                       </ul>
                     </div>
                   </div>
