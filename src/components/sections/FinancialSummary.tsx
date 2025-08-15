@@ -46,7 +46,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
 
   return (
     <section className="py-16 px-4" id="summary">
-      <div className="max-w-6xl mx-auto">
+      <div className="section-container">
         {/* Header */}
         <div
           ref={headerRef as React.RefObject<HTMLDivElement>}
@@ -77,10 +77,10 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
             onToggleVisibility={() => toggleCardVisibility("financial-resumo")}
             hideControls={hideControls}
           >
-            <div className="grid md:grid-cols-3 gap-6 p-10">
-              <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Investimentos Financeiros</h3>
-                <div className="text-3xl font-bold mb-1">
+            <div className="card-grid-3">
+              <div className="card-metric">
+                <h3 className="card-metric-label">Investimentos Financeiros</h3>
+                <div className="card-metric-value">
                   {data.ativos.length > 0 && (
                     <>
                       <div>{formatCurrency(data.ativos[0].valor)}</div>
@@ -94,13 +94,13 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 />
               </div>
 
-              <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Renda Esperada (12 meses)</h3>
-                <div className="text-3xl font-bold mb-1">
+              <div className="card-metric">
+                <h3 className="card-metric-label">Renda Esperada (12 meses)</h3>
+                <div className="card-metric-value">
                   {formatCurrency(totalIncomeAnnual)}
                 </div>
-                <div className="text-xs text-muted-foreground mb-2">{formatCurrency(totalIncome)} / mês</div>
-                <div className="flex justify-center gap-2 flex-wrap">
+                <div className="card-metric-subtitle">{formatCurrency(totalIncome)} / mês</div>
+                <div className="card-status-container">
                   {data.rendas.map((renda, index) => (
                     <StatusChip
                       key={index}
@@ -112,12 +112,12 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 </div>
               </div>
 
-              <div className="text-center">
-                <h3 className="text-muted-foreground text-sm mb-1">Excedente Esperado (12 meses)</h3>
-                <div className="text-3xl font-bold mb-1">
+              <div className="card-metric">
+                <h3 className="card-metric-label">Excedente Esperado (12 meses)</h3>
+                <div className="card-metric-value">
                   {formatCurrency(surplusAnnual)}
                 </div>
-                <div className="text-xs text-muted-foreground mb-2">{formatCurrency(surplusMonthly)} / mês</div>
+                <div className="card-metric-subtitle">{formatCurrency(surplusMonthly)} / mês</div>
                 <StatusChip
                   status={surplusMonthly > 0 ? 'success' : 'danger'}
                   label={surplusMonthly > 0 ? 'Positivo' : 'Negativo'}
@@ -140,14 +140,14 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
               onToggleVisibility={() => toggleCardVisibility("renda-despesas")}
               hideControls={hideControls}
             >
-              <div className="p-10">
-                <h3 className="text-2xl font-semibold mb-4">Renda vs. Despesas</h3>
-                <div className="mb-6">
-                  <div className="flex justify-between mb-2">
-                    <span>Renda Total</span>
-                    <div className="flex items-center gap-6">
-                      <span className="font-medium">{formatCurrency(totalIncome)} / mês</span>
-                      <span className="font-medium text-muted-foreground">{formatCurrency(totalIncomeAnnual)} / ano</span>
+              <div>
+                <h3 className="card-title-standard">Renda vs. Despesas</h3>
+                <div className="card-progress-container">
+                  <div className="card-progress-header">
+                    <span className="card-progress-label">Renda Total</span>
+                    <div className="card-flex-between">
+                      <span className="card-progress-value">{formatCurrency(totalIncome)} / mês</span>
+                      <span className="card-progress-value text-muted-foreground">{formatCurrency(totalIncomeAnnual)} / ano</span>
                     </div>
                   </div>
                   <ProgressBar

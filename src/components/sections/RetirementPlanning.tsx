@@ -115,19 +115,19 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
 
   return (
     <section className="min-h-screen py-16 px-4" id="retirement">
-      <div className="max-w-4xl mx-auto">
+      <div className="section-container">
         <div
           ref={headerRef as React.RefObject<HTMLDivElement>}
           className="mb-12 text-center animate-on-scroll"
         >
           <div className="inline-block">
-            <div className="flex items-center justify-center mb-4">
+            <div className="card-flex-center mb-4">
               <div className="bg-financial-success/30 p-3 rounded-full">
                 <PiggyBank size={28} className="text-financial-success" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">Planejamento de Aposentadoria</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="card-title-standard text-4xl">Planejamento de Aposentadoria</h2>
+            <p className="card-description-standard max-w-2xl mx-auto">
               Estratégias e projeções para garantir sua independência financeira e
               qualidade de vida na aposentadoria.
             </p>

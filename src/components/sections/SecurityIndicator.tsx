@@ -32,7 +32,7 @@ const SecurityIndicator: React.FC<SecurityIndicatorProps> = ({ scoreFinanceiro }
 
 	return (
 		<section className="py-6 px-4" id="security-indicator">
-			<div className="max-w-4xl w-full mx-auto">
+			<div className="section-container">
 				<div ref={securityIndexRef as React.RefObject<HTMLDivElement>} className="mb-6 animate-on-scroll">
 					<Card className="md:p-8">
 						<CardHeader className="pb-2">

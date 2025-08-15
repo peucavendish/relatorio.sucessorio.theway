@@ -63,7 +63,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
 
   return (
     <section className="py-16 px-4" id="succession">
-      <div className="max-w-5xl mx-auto">
+      <div className="section-container">
         {/* Header */}
         <div
           ref={headerRef as React.RefObject<HTMLDivElement>}
@@ -257,7 +257,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
               onToggleVisibility={() => toggleCardVisibility("projeto-vida-legado")}
             >
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="card-title-standard flex items-center gap-2">
                   <Users size={20} className="text-accent" />
                   Projeto de Vida e Legado
                 </CardTitle>

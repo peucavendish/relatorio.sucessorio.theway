@@ -87,7 +87,7 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
 
   return (
     <section className="py-16 px-4" id="beach-house">
-      <div className="max-w-4xl mx-auto">
+      <div className="section-container">
         {/* Header */}
         <div
           ref={headerRef as React.RefObject<HTMLDivElement>}
@@ -123,15 +123,15 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="flex items-center justify-center">
+              <div className="card-grid-2">
+                <div className="card-flex-center">
                   <div className="relative w-64 h-64 bg-accent/5 rounded-full flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full border-4 border-dashed border-accent/20 animate-spin-slow"></div>
-                    <div className="text-center px-4">
+                    <div className="card-text-center px-4">
                       <div className={`${getValueTextClass(imovelDesejado.objetivo?.valorImovel || 0)} font-bold text-accent break-words`}>
                         {formatImovelValue(imovelDesejado.objetivo?.valorImovel || 0)}
                       </div>
-                      <div className="text-sm text-muted-foreground mt-2">
+                      <div className="card-metric-subtitle">
                         Valor do imóvel
                       </div>
                     </div>
@@ -139,10 +139,10 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
                 </div>
 
                 <div className="flex flex-col justify-center">
-                  <h3 className="text-xl font-medium mb-4">Detalhes do Objetivo</h3>
-                  <ul className="space-y-4">
-                    <li className="flex items-start">
-                      <Calendar className="mr-3 text-accent mt-1" size={18} />
+                  <h3 className="card-title-standard text-lg">Detalhes do Objetivo</h3>
+                  <ul className="card-list">
+                    <li className="card-flex-start">
+                      <Calendar className="card-icon mt-1" size={18} />
                       <div>
                         <div className="font-medium">Prazo Desejado</div>
                         <div className="text-muted-foreground">

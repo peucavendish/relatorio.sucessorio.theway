@@ -100,7 +100,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
 
   return (
     <section className="min-h-screen py-16 px-4" id="total-asset-allocation">
-      <div className="max-w-5xl mx-auto">
+      <div className="section-container">
         {/* Section Header */}
         <div
           ref={headerRef as React.RefObject<HTMLDivElement>}
@@ -135,54 +135,54 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
               <CardDescription>Consolidação de ativos, passivos e patrimônio líquido</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-6 p-6">
-                <div className="text-center">
-                  <h3 className="text-muted-foreground text-sm mb-1">Total de Ativos</h3>
-                  <div className="text-3xl font-bold mb-1">{formatCurrency(totalAtivos)}</div>
+              <div className="card-grid-3">
+                <div className="card-metric">
+                  <h3 className="card-metric-label">Total de Ativos</h3>
+                  <div className="card-metric-value">{formatCurrency(totalAtivos)}</div>
                 </div>
-                <div className="text-center">
-                  <h3 className="text-muted-foreground text-sm mb-1">Total de Passivos</h3>
-                  <div className="text-3xl font-bold mb-1">{formatCurrency(totalPassivos)}</div>
+                <div className="card-metric">
+                  <h3 className="card-metric-label">Total de Passivos</h3>
+                  <div className="card-metric-value">{formatCurrency(totalPassivos)}</div>
                 </div>
-                <div className="text-center">
-                  <h3 className="text-muted-foreground text-sm mb-1">Patrimônio Líquido</h3>
-                  <div className="text-3xl font-bold mb-1">{formatCurrency(patrimonioLiquido)}</div>
+                <div className="card-metric">
+                  <h3 className="card-metric-label">Patrimônio Líquido</h3>
+                  <div className="card-metric-value">{formatCurrency(patrimonioLiquido)}</div>
                 </div>
               </div>
-              <div className="mt-4 pt-6 border-t border-border/70">
-                <div className="grid md:grid-cols-2 gap-8">
+              <div className="card-divider">
+                <div className="card-grid-2">
                   <div>
-                    <h4 className="font-medium mb-3">Ativos</h4>
-                    <div className="space-y-3">
+                    <h4 className="card-title-standard text-lg">Ativos</h4>
+                    <div className="card-list">
                       {ativos.map((asset: any, index: number) => (
-                        <div key={index} className="flex justify-between items-start">
-                          <span className="text-sm">{asset?.tipo}{asset?.classe ? ` - ${asset.classe}` : ''}</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium">{formatCurrency(Number(asset?.valor) || 0)}</span>
-                            <span className="text-xs text-muted-foreground">({totalAtivosLista > 0 ? Math.round(((Number(asset?.valor) || 0) / totalAtivosLista) * 100) : 0}%)</span>
+                        <div key={index} className="card-list-item">
+                          <span className="card-list-label">{asset?.tipo}{asset?.classe ? ` - ${asset.classe}` : ''}</span>
+                          <div className="card-flex-between">
+                            <span className="card-list-value">{formatCurrency(Number(asset?.valor) || 0)}</span>
+                            <span className="card-list-percentage">({totalAtivosLista > 0 ? Math.round(((Number(asset?.valor) || 0) / totalAtivosLista) * 100) : 0}%)</span>
                           </div>
                         </div>
                       ))}
-                      <div className="pt-3 border-t border-border flex justify-between items-center">
+                      <div className="card-divider card-list-item">
                         <span className="font-semibold">Total de Ativos</span>
                         <span className="font-semibold">{formatCurrency(totalAtivosLista)}</span>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-medium mb-3">Passivos</h4>
+                    <h4 className="card-title-standard text-lg">Passivos</h4>
                     {passivos && passivos.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="card-list">
                         {passivos.map((liability: any, index: number) => (
-                          <div key={index} className="flex justify-between items-start">
-                            <span className="text-sm">{liability?.tipo}</span>
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm font-medium">{formatCurrency(Number(liability?.valor) || 0)}</span>
-                              <span className="text-xs text-muted-foreground">({totalPassivos > 0 ? Math.round(((Number(liability?.valor) || 0) / totalPassivos) * 100) : 0}%)</span>
+                          <div key={index} className="card-list-item">
+                            <span className="card-list-label">{liability?.tipo}</span>
+                            <div className="card-flex-between">
+                              <span className="card-list-value">{formatCurrency(Number(liability?.valor) || 0)}</span>
+                              <span className="card-list-percentage">({totalPassivos > 0 ? Math.round(((Number(liability?.valor) || 0) / totalPassivos) * 100) : 0}%)</span>
                             </div>
                           </div>
                         ))}
-                        <div className="pt-3 border-t border-border flex justify-between items-center">
+                        <div className="card-divider card-list-item">
                           <span className="font-semibold">Total de Passivos</span>
                           <span className="font-semibold">{formatCurrency(totalPassivos)}</span>
                         </div>

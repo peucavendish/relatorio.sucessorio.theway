@@ -42,7 +42,9 @@ const HideableCard: React.FC<HideableCardProps> = ({
         </button>
       )}
 
-      {children}
+      <div className="p-8">
+        {children}
+      </div>
 
       {!isVisible && (
         <div className="absolute inset-0 bg-slate-100/30 flex justify-end items-end p-1">

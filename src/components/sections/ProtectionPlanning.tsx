@@ -59,7 +59,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
 
   return (
     <section className="py-16 px-4" id="protection">
-      <div className="container mx-auto max-w-5xl">
+      <div className="section-container">
         <div className="mb-12 text-center">
           <div className="inline-block">
             <div className="flex items-center justify-center mb-4">
@@ -107,11 +107,11 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
           className="mb-8"
         >
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8 text-accent" />
+            <div className="card-flex-start">
+              <Shield className="card-icon h-8 w-8" />
               <div>
-                <CardTitle>Liquidez para Inventário</CardTitle>
-                <CardDescription>
+                <CardTitle className="card-title-standard">Liquidez para Inventário</CardTitle>
+                <CardDescription className="card-description-standard">
                   Comparativo entre previdência privada (VGBL/PGBL) e seguro de vida para garantir liquidez imediata e reduzir o impacto do inventário.
                 </CardDescription>
               </div>
@@ -196,7 +196,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                         <ReBarChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
-                          <YAxis tickFormatter={(v) => `R$ ${(v/1_000_000).toFixed(1)}Mi`} />
+                          <YAxis tickFormatter={(v) => `R$ ${(v / 1_000_000).toFixed(1)}Mi`} />
                           <ChartTooltip content={<ChartTooltipContent />} />
                           <ChartLegend content={<ChartLegendContent />} />
                           <Bar dataKey="Total" fill="#3B82F6" />
@@ -297,7 +297,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                         <ReBarChart data={consumoPatrimonioData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
-                          <YAxis tickFormatter={(v) => `R$ ${(v/1_000_000).toFixed(1)}Mi`} />
+                          <YAxis tickFormatter={(v) => `R$ ${(v / 1_000_000).toFixed(1)}Mi`} />
                           <ChartTooltip content={<ChartTooltipContent />} />
                           <ChartLegend content={<ChartLegendContent />} />
                           <Bar dataKey="Consumido" stackId="a" fill="#EF4444" />

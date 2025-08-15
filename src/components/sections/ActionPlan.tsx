@@ -210,19 +210,19 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
 
   return (
     <section className="py-16 px-4" id="action-plan">
-      <div className="max-w-5xl mx-auto">
+      <div className="section-container">
         <div
           ref={titleRef}
           className="mb-12 text-center animate-on-scroll"
         >
           <div className="inline-block">
-            <div className="flex items-center justify-center mb-4">
+            <div className="card-flex-center mb-4">
               <div className="bg-accent/10 p-3 rounded-full">
                 <ListChecks size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">Plano de Ação Financeira</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="card-title-standard text-4xl">Plano de Ação Financeira</h2>
+            <p className="card-description-standard max-w-2xl mx-auto">
               Conjunto de ações estratégicas para alcançar seus objetivos financeiros e patrimoniais
             </p>
           </div>
@@ -230,7 +230,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
 
         <div
           ref={timelineRef}
-          className="max-w-5xl mx-auto mb-8 animate-on-scroll"
+          className="section-container mb-8 animate-on-scroll"
         >
           <h3 className="text-xl font-semibold mb-6">Próximos Passos</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -274,7 +274,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
 
         <div
           ref={priorityRef}
-          className="max-w-5xl mx-auto mb-6 animate-on-scroll"
+          className="section-container mb-6 animate-on-scroll"
         >
           {false && (
             <>

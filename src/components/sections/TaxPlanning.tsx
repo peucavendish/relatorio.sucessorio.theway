@@ -63,7 +63,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
 
   return (
     <section className="min-h-screen py-16 px-4" id="tax">
-      <div className="max-w-4xl mx-auto">
+      <div className="section-container">
         {/* Section Header */}
         <div
           ref={headerRef as React.RefObject<HTMLDivElement>}
@@ -95,7 +95,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2">
+              <CardTitle className="card-title-standard flex items-center gap-2">
                 <FileText size={20} className="text-financial-info" />
                 Diagnóstico Tributário
               </CardTitle>

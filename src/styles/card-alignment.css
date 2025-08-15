@@ -1,0 +1,199 @@
+/* Card Alignment Utilities */
+
+/* Standard card content spacing */
+.card-content-standard {
+    @apply p-8;
+}
+
+/* Standard grid layouts */
+.card-grid-2 {
+    @apply grid md:grid-cols-2 gap-8;
+}
+
+.card-grid-3 {
+    @apply grid md:grid-cols-3 gap-8;
+}
+
+.card-grid-4 {
+    @apply grid md:grid-cols-4 gap-8;
+}
+
+/* Standard text alignment */
+.card-text-center {
+    @apply text-center;
+}
+
+.card-text-left {
+    @apply text-left;
+}
+
+/* Standard spacing between card elements */
+.card-section-spacing {
+    @apply mb-8;
+}
+
+.card-item-spacing {
+    @apply space-y-6;
+}
+
+/* Standard card header styling */
+.card-header-standard {
+    @apply mb-12;
+}
+
+.card-title-standard {
+    @apply text-2xl font-semibold mb-2;
+}
+
+.card-description-standard {
+    @apply text-muted-foreground mb-6;
+}
+
+/* Section header specific styling */
+.section-header {
+    @apply mb-12 text-center;
+}
+
+.section-header-icon {
+    @apply p-3 rounded-full;
+}
+
+.section-header-title {
+    @apply text-4xl font-bold mb-3;
+}
+
+.section-header-description {
+    @apply text-muted-foreground max-w-2xl mx-auto;
+}
+
+/* Standard metric display */
+.card-metric {
+    @apply text-center;
+}
+
+.card-metric-label {
+    @apply text-muted-foreground text-sm mb-2;
+}
+
+.card-metric-value {
+    @apply text-3xl font-bold mb-2;
+}
+
+.card-metric-subtitle {
+    @apply text-xs text-muted-foreground mb-3;
+}
+
+/* Standard list styling */
+.card-list {
+    @apply space-y-4;
+}
+
+.card-list-item {
+    @apply flex justify-between items-center;
+}
+
+.card-list-label {
+    @apply text-sm;
+}
+
+.card-list-value {
+    @apply text-sm font-medium;
+}
+
+.card-list-percentage {
+    @apply text-xs text-muted-foreground;
+}
+
+/* Standard divider */
+.card-divider {
+    @apply mt-6 pt-6 border-t border-border/70;
+}
+
+/* Standard flex layouts */
+.card-flex-center {
+    @apply flex items-center justify-center;
+}
+
+.card-flex-between {
+    @apply flex items-center justify-between;
+}
+
+.card-flex-start {
+    @apply flex items-start;
+}
+
+/* Standard icon spacing */
+.card-icon {
+    @apply mr-3 text-accent;
+}
+
+/* Standard button spacing */
+.card-button-group {
+    @apply flex gap-3 mt-6;
+}
+
+/* Standard chart container */
+.card-chart-container {
+    @apply mt-6 p-4 bg-muted/20 rounded-lg;
+}
+
+/* Standard status display */
+.card-status-container {
+    @apply flex justify-center gap-2 flex-wrap mt-3;
+}
+
+/* Standard progress bar container */
+.card-progress-container {
+    @apply mb-4;
+}
+
+.card-progress-header {
+    @apply flex justify-between mb-2;
+}
+
+.card-progress-label {
+    @apply text-sm;
+}
+
+.card-progress-value {
+    @apply font-medium;
+}
+
+/* Standard table styling */
+.card-table {
+    @apply w-full;
+}
+
+.card-table-header {
+    @apply bg-muted/30;
+}
+
+.card-table-cell {
+    @apply p-3 text-sm;
+}
+
+/* Standard alert styling */
+.card-alert {
+    @apply p-4 rounded-lg border mb-6;
+}
+
+.card-alert-info {
+    @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+.card-alert-warning {
+    @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.card-alert-success {
+    @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.card-alert-error {
+    @apply bg-red-50 border-red-200 text-red-800;
+}
+
+/* Standard section container */
+.section-container {
+    @apply max-w-6xl mx-auto;
+}
