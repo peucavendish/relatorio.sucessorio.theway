@@ -76,6 +76,19 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   // Listas detalhadas de ativos para exibição
   const ativos = Array.isArray(data?.financas?.ativos) ? data.financas.ativos : [];
   const totalAtivosLista = ativos.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
+  const endividamento = totalAtivos > 0 ? Number(((totalPassivos / totalAtivos) * 100).toFixed(2)) : 0;
+  const rendaTotal = Array.isArray(data?.financas?.rendas)
+    ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+    : 0;
+  const excedenteMensal = Number(data?.financas?.resumo?.excedente_mensal) || 0;
+  const poupanca = rendaTotal > 0 ? Number(((excedenteMensal / rendaTotal) * 100).toFixed(2)) : 0;
+  const despesasMensais = Number(data?.financas?.resumo?.despesas_mensais) || 0;
+  const investimentos = Array.isArray(data?.financas?.ativos)
+    ? data.financas.ativos.filter((a: any) => a?.tipo === 'Investimentos').reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0)
+    : 0;
+  const horizonteCobertura = despesasMensais > 0 ? Number((investimentos / (12 * despesasMensais)).toFixed(2)) : 0;
+
+   
 
   return (
     <section className="min-h-screen py-16 px-4" id="total-asset-allocation">
@@ -113,66 +126,66 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
               <CardTitle className="text-xl">Balanço Patrimonial</CardTitle>
               <CardDescription>Consolidação de ativos, passivos e patrimônio líquido</CardDescription>
             </CardHeader>
-                          <CardContent>
-                <div className="grid md:grid-cols-3 gap-6 p-6">
-                  <div className="text-center">
-                    <h3 className="text-muted-foreground text-sm mb-1">Total de Ativos</h3>
-                    <div className="text-3xl font-bold mb-1">{formatCurrency(totalAtivos)}</div>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-muted-foreground text-sm mb-1">Total de Passivos</h3>
-                    <div className="text-3xl font-bold mb-1">{formatCurrency(totalPassivos)}</div>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-muted-foreground text-sm mb-1">Patrimônio Líquido</h3>
-                    <div className="text-3xl font-bold mb-1">{formatCurrency(patrimonioLiquido)}</div>
-                  </div>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-6 p-6">
+                <div className="text-center">
+                  <h3 className="text-muted-foreground text-sm mb-1">Total de Ativos</h3>
+                  <div className="text-3xl font-bold mb-1">{formatCurrency(totalAtivos)}</div>
                 </div>
-                <div className="mt-4 pt-6 border-t border-border/70">
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div>
-                      <h4 className="font-medium mb-3">Ativos</h4>
+                <div className="text-center">
+                  <h3 className="text-muted-foreground text-sm mb-1">Total de Passivos</h3>
+                  <div className="text-3xl font-bold mb-1">{formatCurrency(totalPassivos)}</div>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-muted-foreground text-sm mb-1">Patrimônio Líquido</h3>
+                  <div className="text-3xl font-bold mb-1">{formatCurrency(patrimonioLiquido)}</div>
+                </div>
+              </div>
+              <div className="mt-4 pt-6 border-t border-border/70">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 className="font-medium mb-3">Ativos</h4>
+                    <div className="space-y-3">
+                      {ativos.map((asset: any, index: number) => (
+                        <div key={index} className="flex justify-between items-start">
+                          <span className="text-sm">{asset?.tipo}{asset?.classe ? ` - ${asset.classe}` : ''}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium">{formatCurrency(Number(asset?.valor) || 0)}</span>
+                            <span className="text-xs text-muted-foreground">({totalAtivosLista > 0 ? Math.round(((Number(asset?.valor) || 0) / totalAtivosLista) * 100) : 0}%)</span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-3 border-t border-border flex justify-between items-center">
+                        <span className="font-semibold">Total de Ativos</span>
+                        <span className="font-semibold">{formatCurrency(totalAtivosLista)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-3">Passivos</h4>
+                    {passivos && passivos.length > 0 ? (
                       <div className="space-y-3">
-                        {ativos.map((asset: any, index: number) => (
+                        {passivos.map((liability: any, index: number) => (
                           <div key={index} className="flex justify-between items-start">
-                            <span className="text-sm">{asset?.tipo}{asset?.classe ? ` - ${asset.classe}` : ''}</span>
+                            <span className="text-sm">{liability?.tipo}</span>
                             <div className="flex items-center gap-3">
-                              <span className="text-sm font-medium">{formatCurrency(Number(asset?.valor) || 0)}</span>
-                              <span className="text-xs text-muted-foreground">({totalAtivosLista > 0 ? Math.round(((Number(asset?.valor) || 0) / totalAtivosLista) * 100) : 0}%)</span>
+                              <span className="text-sm font-medium">{formatCurrency(Number(liability?.valor) || 0)}</span>
+                              <span className="text-xs text-muted-foreground">({totalPassivos > 0 ? Math.round(((Number(liability?.valor) || 0) / totalPassivos) * 100) : 0}%)</span>
                             </div>
                           </div>
                         ))}
                         <div className="pt-3 border-t border-border flex justify-between items-center">
-                          <span className="font-semibold">Total de Ativos</span>
-                          <span className="font-semibold">{formatCurrency(totalAtivosLista)}</span>
+                          <span className="font-semibold">Total de Passivos</span>
+                          <span className="font-semibold">{formatCurrency(totalPassivos)}</span>
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-3">Passivos</h4>
-                      {passivos && passivos.length > 0 ? (
-                        <div className="space-y-3">
-                          {passivos.map((liability: any, index: number) => (
-                            <div key={index} className="flex justify-between items-start">
-                              <span className="text-sm">{liability?.tipo}</span>
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm font-medium">{formatCurrency(Number(liability?.valor) || 0)}</span>
-                                <span className="text-xs text-muted-foreground">({totalPassivos > 0 ? Math.round(((Number(liability?.valor) || 0) / totalPassivos) * 100) : 0}%)</span>
-                              </div>
-                            </div>
-                          ))}
-                          <div className="pt-3 border-t border-border flex justify-between items-center">
-                            <span className="font-semibold">Total de Passivos</span>
-                            <span className="font-semibold">{formatCurrency(totalPassivos)}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Nenhum passivo registrado</p>
-                      )}
-                    </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Nenhum passivo registrado</p>
+                    )}
                   </div>
                 </div>
-              </CardContent>
+              </div>
+            </CardContent>
           </HideableCard>
         </div>
 
@@ -253,19 +266,15 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-4 bg-muted/10 rounded-lg border border-border/50">
                       <span className="font-medium">% de Endividamento</span>
-                      <span className="text-accent font-semibold">18%</span>
+                      <span className="text-accent font-semibold">{endividamento}%</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-muted/10 rounded-lg border border-border/50">
                       <span className="font-medium">% de Poupança</span>
-                      <span className="text-accent font-semibold">32%</span>
+                      <span className="text-accent font-semibold">{poupanca}%</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-muted/10 rounded-lg border border-border/50">
                       <span className="font-medium">Horizonte de Cobertura</span>
-                      <span className="text-accent font-semibold">6 meses</span>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-muted/10 rounded-lg border border-border/50">
-                      <span className="font-medium">Liquidez dos Ativos</span>
-                      <span className="text-destructive font-semibold">{baixaLiquidez ? 'Baixa' : 'Média'}</span>
+                      <span className="text-accent font-semibold">{horizonteCobertura} meses</span>
                     </div>
                   </div>
                 </div>
@@ -287,7 +296,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
               </div>
 
               {/* Insights e Recomendações */}
-              <div className="space-y-6">
+              {/* <div className="space-y-6">
                 <div className="p-6 bg-muted/10 rounded-lg border border-border/50">
                   <h4 className="font-semibold mb-4 text-lg">🎯 Principais Observações</h4>
                   <ul className="space-y-3 text-sm">
@@ -309,7 +318,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                     )}
                   </ul>
                 </div>
-                
+
                 <div className="p-6 bg-muted/10 rounded-lg border border-border/50">
                   <h4 className="font-semibold mb-4 text-lg">💡 Recomendações</h4>
                   <ul className="space-y-3 text-sm">
@@ -329,7 +338,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                     </li>
                   </ul>
                 </div>
-              </div>
+              </div> */}
             </CardContent>
           </HideableCard>
         </div>

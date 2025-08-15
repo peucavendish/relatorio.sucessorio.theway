@@ -30,31 +30,32 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
   if (!protectionData) {
     return <div>Dados de proteção patrimonial não disponíveis</div>;
   }
+  console.log(data);
+  console.log('ok');
 
   // Descrições amigáveis para cada seguro
   const descricaoVida = protectionData?.seguroVida?.descricao || 'Protege a renda da família e viabiliza custos sucessórios, garantindo liquidez imediata.';
-  const descricaoPatrimonial = protectionData?.seguroPatrimonial?.descricao || 'Protege os bens imobiliários e móveis contra riscos como incêndio, roubo e danos elétricos.';
+  const descricaoComposicaoPatrimonial = 'Protege os bens imobiliários e móveis contra riscos como incêndio, roubo e danos elétricos.';
   const descricaoDO = protectionData?.seguroDO?.descricao || 'Proteção para diretores e administradores contra reclamações decorrentes de atos de gestão.';
   const descricaoViagem = protectionData?.seguroInternacional?.descricao || 'Cobre despesas médicas, extravio de bagagem e imprevistos durante viagens internacionais.';
 
   // Referência de renda mensal para simulação de garantia (aposentadoria desejada ou renda atual)
-  const rendaMensalDesejada = Number(data?.aposentadoria?.rendaMensalDesejada || 0);
-  const rendaAtualMensal = Array.isArray(data?.financas?.rendas)
+  // Soma todas as rendas mensais do cliente
+  const minhasRendasMensais = Array.isArray(data?.financas?.rendas)
     ? data.financas.rendas.reduce((acc: number, r: any) => acc + (Number(r?.valor) || 0), 0)
     : 0;
-  const rendaMensalReferencia = rendaMensalDesejada > 0 ? rendaMensalDesejada : rendaAtualMensal;
 
   const coberturaMinimaSugerida = Number(protectionData?.seguroVida?.coberturaMinima || 0);
   const defaultGarantiaYears = (() => {
-    if (rendaMensalReferencia > 0 && coberturaMinimaSugerida > 0) {
-      const anos = Math.round(coberturaMinimaSugerida / (rendaMensalReferencia * 12));
+    if (minhasRendasMensais > 0 && coberturaMinimaSugerida > 0) {
+      const anos = Math.round(coberturaMinimaSugerida / (minhasRendasMensais * 12));
       return Math.min(30, Math.max(1, anos));
     }
     return 5;
   })();
 
   const [anosGarantia, setAnosGarantia] = React.useState<number>(defaultGarantiaYears);
-  const coberturaSimulada = Math.max(0, rendaMensalReferencia * 12 * anosGarantia);
+  const coberturaSimulada = Math.max(0, minhasRendasMensais * 12 * anosGarantia);
 
   return (
     <section className="py-16 px-4" id="protection">
@@ -367,8 +368,8 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                     <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
-                      <div className="text-xs text-muted-foreground">Renda mensal de referência</div>
-                      <div className="font-medium">{formatCurrency(rendaMensalReferencia)}</div>
+                      <div className="text-xs text-muted-foreground">Minhas rendas mensais</div>
+                      <div className="font-medium">{formatCurrency(minhasRendasMensais)}</div>
                     </div>
                     <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
                       <div className="text-xs text-muted-foreground">Cobertura simulada</div>
@@ -409,7 +410,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
               <Briefcase className="h-8 w-8 text-accent" />
               <div>
                 <CardTitle>Seguro Patrimonial</CardTitle>
-                <CardDescription>{descricaoPatrimonial}</CardDescription>
+                <CardDescription>{descricaoComposicaoPatrimonial}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -418,9 +419,11 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
               <div>
                 <div className="mb-4">
                   <div className="text-sm text-muted-foreground mb-1">Valor Sugerido</div>
-                  <div className="text-xl font-bold text-accent">{formatCurrency(protectionData.seguroPatrimonial.coberturaRecomendada)}</div>
+                  <div className="text-xl font-bold text-accent">
+                    {formatCurrency(data?.financas?.composicaoPatrimonial?.Imóveis || 0)}
+                  </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {`Bens imóveis: ${formatCurrency(protectionData.seguroPatrimonial.bensImoveis)} | Adicional: ${formatCurrency(protectionData.seguroPatrimonial.adicional)}`}
+                    {`Bens imóveis: ${formatCurrency(data?.financas?.composicaoPatrimonial?.Imóveis || 0)}`}
                   </p>
                 </div>
               </div>
