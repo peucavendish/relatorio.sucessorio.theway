@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { getLiquidityEvents, saveLiquidityEvents, LiquidityEventApi } from '@/services/liquidityEventsService';
 
 // Custom currency input component
 const CurrencyInput: React.FC<{
@@ -118,7 +119,7 @@ const calculatePerpetuityContribution = (
 ) => {
   const taxa_mensal_real = Math.pow(1 + rentabilidade_real_liquida_acumulacao, 1 / 12) - 1;
   const meses_acumulacao = (idade_para_aposentar - idade_atual) * 12;
-  
+
   if (meses_acumulacao <= 0) return 0;
 
   // Para perpetuidade, o capital necessário é: saque_mensal / taxa_mensal
@@ -167,6 +168,7 @@ const calculateRetirementProjection = (
   eventosLiquidez: LiquidityEvent[] = [],
   isPerpetuity: boolean = false
 ) => {
+
   // Taxa mensal equivalente (igual à planilha)
   const taxa_mensal_real = Math.pow(1 + rentabilidade_real_liquida_acumulacao, 1 / 12) - 1;
 
@@ -361,6 +363,62 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
   const [newEventAge, setNewEventAge] = useState<number>(currentAge + 5);
   const [newEventValue, setNewEventValue] = useState<number>(0);
   const [newEventType, setNewEventType] = useState<'positive' | 'negative'>('positive');
+
+  // Função para obter o session_id da URL
+  const getSessionId = (): string | null => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('sessionId');
+  };
+
+  // Carregar eventos de liquidez da API ao montar o componente
+  useEffect(() => {
+    const loadLiquidityEvents = async () => {
+      const sessionId = getSessionId();
+      if (!sessionId) return;
+
+      try {
+        const apiEvents = await getLiquidityEvents(sessionId);
+        const events: LiquidityEvent[] = apiEvents.map((event, index) => ({
+          id: `event-${index}`,
+          name: event.nome,
+          age: Number(event.idade),
+          value: Number(event.valor),
+          isPositive: event.tipo === 'entrada'
+        }));
+        setLiquidityEvents(events);
+      } catch (error) {
+        console.error('Error loading liquidity events:', error);
+      }
+    };
+
+    loadLiquidityEvents();
+  }, []);
+
+  // Recalcular projeção sempre que os eventos de liquidez mudarem
+  useEffect(() => {
+    const result = calculateRetirementProjection(
+      currentAge,
+      idadeAposentadoria,
+      lifeExpectancy,
+      currentPortfolio,
+      aporteMensal,
+      rendaMensal,
+      taxaRetorno,
+      taxaRetorno,
+      liquidityEvents,
+      isPerpetuity
+    );
+
+    setAporteMensal(result.aporteMensal);
+    setProjection({
+      ...result,
+      fluxoCapital: result.fluxoCapital.map(item => ({
+        age: item.idade,
+        capital: Math.round(item.capital)
+      }))
+    });
+  }, [liquidityEvents, currentAge, idadeAposentadoria, lifeExpectancy, currentPortfolio, rendaMensal, taxaRetorno, isPerpetuity]);
+
   const [projection, setProjection] = useState(() => {
     const result = calculateRetirementProjection(
       currentAge,
@@ -383,7 +441,32 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     };
   });
 
-  const handleAddLiquidityEvent = () => {
+  // Atualizar API ao adicionar/remover evento
+  const syncEventsToApi = async (events: LiquidityEvent[]) => {
+    const sessionId = getSessionId();
+    if (!sessionId) return;
+
+    try {
+      let apiEvents: LiquidityEventApi[];
+      if (events.length === 0) {
+        // Se não houver eventos, envie apenas o session_id
+        apiEvents = [{ session_id: sessionId } as LiquidityEventApi];
+      } else {
+        apiEvents = events.map(e => ({
+          session_id: sessionId,
+          nome: e.name,
+          idade: e.age,
+          tipo: e.isPositive ? 'entrada' : 'saida',
+          valor: e.value,
+        }));
+      }
+      await saveLiquidityEvents(apiEvents);
+    } catch (error) {
+      console.error('Error syncing liquidity events:', error);
+    }
+  };
+
+  const handleAddLiquidityEvent = async () => {
     if (!newEventName || newEventAge < currentAge || newEventValue <= 0) return;
 
     const newEvent: LiquidityEvent = {
@@ -401,62 +484,16 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     setNewEventValue(0);
     setNewEventType('positive');
 
-    // Recalcula a projeção com os novos valores
-    const result = calculateRetirementProjection(
-      currentAge,
-      idadeAposentadoria,
-      lifeExpectancy,
-      currentPortfolio,
-      aporteMensal,
-      rendaMensal,
-      taxaRetorno,
-      taxaRetorno,
-      updatedEvents,
-      isPerpetuity
-    );
-
-    // Atualiza o aporte mensal com o valor calculado
-    setAporteMensal(result.aporteMensal);
-
-    // Atualiza o gráfico com os novos dados
-    setProjection({
-      ...result,
-      fluxoCapital: result.fluxoCapital.map(item => ({
-        age: item.idade,
-        capital: Math.round(item.capital)
-      }))
-    });
+    // Sincroniza com a API
+    await syncEventsToApi(updatedEvents);
   };
 
-  const handleRemoveLiquidityEvent = (id: string) => {
+  const handleRemoveLiquidityEvent = async (id: string) => {
     const updatedEvents = liquidityEvents.filter(event => event.id !== id);
     setLiquidityEvents(updatedEvents);
 
-    // Recalcula a projeção com os novos valores
-    const result = calculateRetirementProjection(
-      currentAge,
-      idadeAposentadoria,
-      lifeExpectancy,
-      currentPortfolio,
-      aporteMensal,
-      rendaMensal,
-      taxaRetorno,
-      taxaRetorno,
-      updatedEvents,
-      isPerpetuity
-    );
-
-    // Atualiza o aporte mensal com o valor calculado
-    setAporteMensal(result.aporteMensal);
-
-    // Atualiza o gráfico com os novos dados
-    setProjection({
-      ...result,
-      fluxoCapital: result.fluxoCapital.map(item => ({
-        age: item.idade,
-        capital: Math.round(item.capital)
-      }))
-    });
+    // Sincroniza com a API
+    await syncEventsToApi(updatedEvents);
   };
 
   useEffect(() => {
@@ -500,7 +537,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
               Cenário de Aposentadoria {isPerpetuity && "(Perpetuidade)"}
             </CardTitle>
             <CardDescription className="mt-1">
-              {isPerpetuity ? 
+              {isPerpetuity ?
                 "Patrimônio perpétuo - apenas os rendimentos são consumidos" :
                 "Evolução do patrimônio no prazo desejado (alinhado com a planilha)"
               }
@@ -512,8 +549,8 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
             <div className="space-y-1">
               <Label className="text-sm font-medium">Modo Perpetuidade</Label>
               <p className="text-xs text-muted-foreground">
-                {isPerpetuity ? 
-                  "Patrimônio nunca se esgota - apenas os rendimentos são consumidos" : 
+                {isPerpetuity ?
+                  "Patrimônio nunca se esgota - apenas os rendimentos são consumidos" :
                   "Patrimônio finito - pode se esgotar durante a aposentadoria"
                 }
               </p>
@@ -522,7 +559,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
               checked={isPerpetuity}
               onCheckedChange={(checked) => {
                 setIsPerpetuity(checked);
-                
+
                 // Recalcula a projeção com o novo modo
                 const result = calculateRetirementProjection(
                   currentAge,
@@ -974,7 +1011,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
               <tr>
                 <td className="py-2 px-3">Duração do Patrimônio</td>
                 <td className="py-2 px-3 text-right">
-                  {isPerpetuity ? 
+                  {isPerpetuity ?
                     "Perpétuo (nunca se esgota)" :
                     projection.idadeEsgotamento ?
                       `Até os ${projection.idadeEsgotamento} anos (${projection.idadeEsgotamento - idadeAposentadoria} anos)` :
