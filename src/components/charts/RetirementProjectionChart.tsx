@@ -512,8 +512,12 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
           id: `event-${index}`,
           name: event.nome,
           age: Number(event.idade),
+          startAge: Number(event.idade),
           value: Number(event.valor),
-          isPositive: event.tipo === 'entrada'
+          isPositive: event.tipo === 'entrada',
+          recurrence: 'once',
+          endAge: null,
+          enabled: true
         }));
         setLiquidityEvents(events);
       } catch (error) {
@@ -595,7 +599,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
         apiEvents = events.map(e => ({
           session_id: sessionId,
           nome: e.name,
-          idade: e.age,
+          idade: e.startAge ?? e.age ?? currentAge + 1,
           tipo: e.isPositive ? 'entrada' : 'saida',
           valor: e.value,
         }));
@@ -607,8 +611,6 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
   };
 
   const handleAddLiquidityEvent = async () => {
-    if (!newEventName || newEventAge < currentAge || newEventValue <= 0) return;
-  const handleAddLiquidityEvent = () => {
     const startAge = newEventStartAge;
     const endAge = newEventRecurrence === 'once' ? undefined : (newEventEndAge === '' ? undefined : Number(newEventEndAge));
     if (!newEventName || startAge < currentAge || newEventValue <= 0) return;
@@ -646,7 +648,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     await syncEventsToApi(updatedEvents);
   };
 
-  const handleToggleLiquidityEvent = (id: string, enabled: boolean) => {
+  const handleToggleLiquidityEvent = async (id: string, enabled: boolean) => {
     const updatedEvents = liquidityEvents.map(ev => ev.id === id ? { ...ev, enabled } : ev);
     setLiquidityEvents(updatedEvents);
 
@@ -670,6 +672,9 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
         capital: Math.round(item.capital)
       }))
     });
+
+    // Sincroniza com a API
+    await syncEventsToApi(updatedEvents);
   };
 
   const startEditLiquidityEvent = (ev: LiquidityEvent) => {
@@ -682,7 +687,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     setEditEndAge(ev.endAge == null ? '' : ev.endAge);
   };
 
-  const saveEditLiquidityEvent = () => {
+  const saveEditLiquidityEvent = async () => {
     if (!editingEventId) return;
     const startAge = editStartAge;
     const endAge = editRecurrence === 'once' ? undefined : (editEndAge === '' ? undefined : Number(editEndAge));
@@ -725,6 +730,9 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
         capital: Math.round(item.capital)
       }))
     });
+
+    // Sincroniza com a API
+    await syncEventsToApi(updatedEvents);
   };
 
   const cancelEditLiquidityEvent = () => {
@@ -1450,34 +1458,34 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
           className="mt-6"
         >
           <div className="border border-border rounded-md overflow-hidden">
-          <table className="w-full text-xs">
-            <thead className="bg-muted/30">
-              <tr>
-                <th className="py-2 px-3 text-left font-medium">Idade</th>
-                <th className="py-2 px-3 text-left font-medium">Fase</th>
-                <th className="py-2 px-3 text-right font-medium">Capital Inicial</th>
-                <th className="py-2 px-3 text-right font-medium">Eventos</th>
-                <th className="py-2 px-3 text-right font-medium">Aporte</th>
-                <th className="py-2 px-3 text-right font-medium">Rendimento</th>
-                <th className="py-2 px-3 text-right font-medium">Saque</th>
-                <th className="py-2 px-3 text-right font-medium">Capital Final</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(projection.fluxoCaixaAnual || []).map((row: any, idx: number) => (
-                <tr key={idx} className="border-b border-border last:border-0">
-                  <td className="py-2 px-3">{row.idade}</td>
-                  <td className="py-2 px-3">{row.fase}</td>
-                  <td className="py-2 px-3 text-right">{formatCurrency(Math.round(row.capitalInicial))}</td>
-                  <td className="py-2 px-3 text-right">{row.eventos === 0 ? '-' : formatCurrency(Math.round(row.eventos))}</td>
-                  <td className="py-2 px-3 text-right">{row.aporte === 0 ? '-' : formatCurrency(Math.round(row.aporte))}</td>
-                  <td className="py-2 px-3 text-right">{row.rendimento === 0 ? '-' : formatCurrency(Math.round(row.rendimento))}</td>
-                  <td className="py-2 px-3 text-right">{row.saque === 0 ? '-' : formatCurrency(Math.round(row.saque))}</td>
-                  <td className="py-2 px-3 text-right font-medium">{formatCurrency(Math.round(row.capitalFinal))}</td>
+            <table className="w-full text-xs">
+              <thead className="bg-muted/30">
+                <tr>
+                  <th className="py-2 px-3 text-left font-medium">Idade</th>
+                  <th className="py-2 px-3 text-left font-medium">Fase</th>
+                  <th className="py-2 px-3 text-right font-medium">Capital Inicial</th>
+                  <th className="py-2 px-3 text-right font-medium">Eventos</th>
+                  <th className="py-2 px-3 text-right font-medium">Aporte</th>
+                  <th className="py-2 px-3 text-right font-medium">Rendimento</th>
+                  <th className="py-2 px-3 text-right font-medium">Saque</th>
+                  <th className="py-2 px-3 text-right font-medium">Capital Final</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(projection.fluxoCaixaAnual || []).map((row: any, idx: number) => (
+                  <tr key={idx} className="border-b border-border last:border-0">
+                    <td className="py-2 px-3">{row.idade}</td>
+                    <td className="py-2 px-3">{row.fase}</td>
+                    <td className="py-2 px-3 text-right">{formatCurrency(Math.round(row.capitalInicial))}</td>
+                    <td className="py-2 px-3 text-right">{row.eventos === 0 ? '-' : formatCurrency(Math.round(row.eventos))}</td>
+                    <td className="py-2 px-3 text-right">{row.aporte === 0 ? '-' : formatCurrency(Math.round(row.aporte))}</td>
+                    <td className="py-2 px-3 text-right">{row.rendimento === 0 ? '-' : formatCurrency(Math.round(row.rendimento))}</td>
+                    <td className="py-2 px-3 text-right">{row.saque === 0 ? '-' : formatCurrency(Math.round(row.saque))}</td>
+                    <td className="py-2 px-3 text-right font-medium">{formatCurrency(Math.round(row.capitalFinal))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </HideableCard>
       </CardContent>
