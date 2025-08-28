@@ -35,6 +35,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [userReports, setUserReports] = useState(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const getClientData = () => ({
     cliente: {
@@ -156,11 +157,12 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     const fetchUserData = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('sessionId');
+        const currentSessionId = urlParams.get('sessionId');
+        setSessionId(currentSessionId);
 
-        if (sessionId) {
+        if (currentSessionId) {
           const apiUrl = import.meta.env.VITE_API_THE_WAY;
-          const response = await axios.get(`${apiUrl}/data-extract/${sessionId}`);
+          const response = await axios.get(`${apiUrl}/data-extract/${currentSessionId}`);
           setUser(response.data[0]);
         }
       } catch (error) {
@@ -273,13 +275,15 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
               {!clientPropect && (
                 <>
                   <HideableSection sectionId="action-plan" hideControls={clientPropect}>
-                    <ActionPlan data={getClientData()} hideControls={clientPropect} />
+                    <ActionPlan data={getClientData()} hideControls={clientPropect} sessionId={sessionId} />
                   </HideableSection>
-                  <HideableSection sectionId="implementation-monitoring" hideControls={clientPropect}>
+                  {/* <HideableSection sectionId="implementation-monitoring" hideControls={clientPropect}>
                     <ImplementationMonitoring data={getClientData()} hideControls={clientPropect} />
-                  </HideableSection>
+                  </HideableSection> */}
                 </>
               )}
+
+
             </main>
             <DotNavigation />
             <MobileDotNavigation />

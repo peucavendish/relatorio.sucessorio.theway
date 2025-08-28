@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowRight,
   Calendar,
@@ -21,10 +21,12 @@ import {
 import StatusChip from '@/components/ui/StatusChip';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { actionPlanService } from '@/services/actionPlanService';
 
 interface ActionPlanProps {
   data: any;
   hideControls?: boolean;
+  sessionId?: string;
 }
 
 // Componente customizado que estende o Card básico
@@ -44,7 +46,83 @@ const CardWithHighlight = React.forwardRef<
 ));
 CardWithHighlight.displayName = "CardWithHighlight";
 
-const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
+// Mapear próximos passos usando os dados do JSON - movido para fora do componente
+const CRONOGRAMA_INICIAL = [
+  {
+    titulo: "Sucessório e Tributário",
+    descricao: "Planejamento sucessório e otimização tributária",
+    icone: "⚖️",
+    cor: "bg-orange-500/10 text-orange-600 border-orange-200",
+    acoes: [
+      "Elaboração de testamento",
+      "Estruturação de doações em vida",
+      "Otimização tributária",
+      "Proteção sucessória"
+    ]
+  },
+  {
+    titulo: "Diagnóstico de Alocação",
+    descricao: "Análise e reestruturação da alocação de investimentos",
+    icone: "📊",
+    cor: "bg-purple-500/10 text-purple-600 border-purple-200",
+    acoes: [
+      "Análise da carteira atual",
+      "Definição de nova alocação estratégica",
+      "Implementação das mudanças",
+      "Monitoramento contínuo"
+    ]
+  },
+  {
+    titulo: "Projetos Imobilizados",
+    descricao: "Estruturação e otimização de investimentos em imóveis",
+    icone: "🏠",
+    cor: "bg-blue-500/10 text-blue-600 border-blue-200",
+    acoes: [
+      "Análise da carteira imobiliária atual",
+      "Identificação de oportunidades de otimização",
+      "Estruturação de novos investimentos",
+      "Monitoramento de performance"
+    ]
+  },
+  {
+    titulo: "Internacional",
+    descricao: "Planejamento e estruturação para atuação e proteção internacional",
+    icone: "🌍",
+    cor: "bg-cyan-500/10 text-cyan-600 border-cyan-200",
+    acoes: [
+      "Abertura de conta internacional",
+      "Planejamento cambial e remessas",
+      "Investimentos e estrutura patrimonial no exterior",
+      "Seguro viagem e cobertura de saúde internacional"
+    ]
+  },
+  {
+    titulo: "Proteção Patrimonial",
+    descricao: "Implementação de estratégias para proteção do patrimônio",
+    icone: "🛡️",
+    cor: "bg-green-500/10 text-green-600 border-green-200",
+    acoes: [
+      "Constituição de holding patrimonial",
+      "Estruturação de proteções jurídicas",
+      "Implementação de seguros adequados",
+      "Revisão de estruturas societárias"
+    ]
+  },
+  {
+    titulo: "Corporate (Soluções PJ)",
+    descricao: "Soluções para pessoa jurídica: estrutura, caixa, investimentos e proteção",
+    icone: "🏢",
+    cor: "bg-amber-500/10 text-amber-600 border-amber-200",
+    acoes: [
+      "Diagnóstico societário e fiscal",
+      "Gestão de caixa e aplicações da PJ",
+      "Benefícios, previdência e planos para colaboradores",
+      "Proteções corporativas (D&O, riscos e compliance)"
+    ]
+  }
+];
+
+const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }) => {
   const titleRef = useScrollAnimation<HTMLDivElement>();
   const timelineRef = useScrollAnimation<HTMLDivElement>({ threshold: 0.2 });
   const priorityRef = useScrollAnimation<HTMLDivElement>({ threshold: 0.2 });
@@ -68,85 +146,68 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
     return <div className="py-12 px-4 text-center">Dados do plano de ação não disponíveis</div>;
   }
 
-  // Mapear próximos passos usando os dados do JSON
-  const cronogramaInicial = [
-    {
-      titulo: "Sucessório e Tributário",
-      descricao: "Planejamento sucessório e otimização tributária",
-      icone: "⚖️",
-      cor: "bg-orange-500/10 text-orange-600 border-orange-200",
-      acoes: [
-        "Elaboração de testamento",
-        "Estruturação de doações em vida",
-        "Otimização tributária",
-        "Proteção sucessória"
-      ]
-    },
-    {
-      titulo: "Diagnóstico de Alocação",
-      descricao: "Análise e reestruturação da alocação de investimentos",
-      icone: "📊",
-      cor: "bg-purple-500/10 text-purple-600 border-purple-200",
-      acoes: [
-        "Análise da carteira atual",
-        "Definição de nova alocação estratégica",
-        "Implementação das mudanças",
-        "Monitoramento contínuo"
-      ]
-    },
-    {
-      titulo: "Projetos Imobilizados",
-      descricao: "Estruturação e otimização de investimentos em imóveis",
-      icone: "🏠",
-      cor: "bg-blue-500/10 text-blue-600 border-blue-200",
-      acoes: [
-        "Análise da carteira imobiliária atual",
-        "Identificação de oportunidades de otimização",
-        "Estruturação de novos investimentos",
-        "Monitoramento de performance"
-      ]
-    },
-    {
-      titulo: "Internacional",
-      descricao: "Planejamento e estruturação para atuação e proteção internacional",
-      icone: "🌍",
-      cor: "bg-cyan-500/10 text-cyan-600 border-cyan-200",
-      acoes: [
-        "Abertura de conta internacional",
-        "Planejamento cambial e remessas",
-        "Investimentos e estrutura patrimonial no exterior",
-        "Seguro viagem e cobertura de saúde internacional"
-      ]
-    },
-    {
-      titulo: "Proteção Patrimonial",
-      descricao: "Implementação de estratégias para proteção do patrimônio",
-      icone: "🛡️",
-      cor: "bg-green-500/10 text-green-600 border-green-200",
-      acoes: [
-        "Constituição de holding patrimonial",
-        "Estruturação de proteções jurídicas",
-        "Implementação de seguros adequados",
-        "Revisão de estruturas societárias"
-      ]
-    },
-    {
-      titulo: "Corporate (Soluções PJ)",
-      descricao: "Soluções para pessoa jurídica: estrutura, caixa, investimentos e proteção",
-      icone: "🏢",
-      cor: "bg-amber-500/10 text-amber-600 border-amber-200",
-      acoes: [
-        "Diagnóstico societário e fiscal",
-        "Gestão de caixa e aplicações da PJ",
-        "Benefícios, previdência e planos para colaboradores",
-        "Proteções corporativas (D&O, riscos e compliance)"
-      ]
-    }
-  ];
-
-  // Estado local para permitir reordenação de cards (não persistido)
-  const [cronograma, setCronograma] = useState(cronogramaInicial);
+  // Estado local para permitir reordenação de cards
+  const [cronograma, setCronograma] = useState(CRONOGRAMA_INICIAL);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Carregar ordem salva quando o componente montar
+  useEffect(() => {
+    const loadSavedOrder = async () => {
+      if (!sessionId) return;
+
+      try {
+        setIsLoading(true);
+        const response = await actionPlanService.getActionPlanOrder(sessionId);
+
+        if (response.success && response.data?.card_order) {
+          // Reordenar o cronograma baseado na ordem salva
+          let savedOrder = response.data.card_order;
+
+          // Verificar se card_order é uma string JSON e fazer parse
+          if (typeof savedOrder === 'string') {
+            try {
+              savedOrder = JSON.parse(savedOrder);
+            } catch (parseError) {
+              console.error('Erro ao fazer parse do card_order:', parseError);
+              return;
+            }
+          }
+
+          if (Array.isArray(savedOrder)) {
+            const reorderedCronograma = savedOrder.map(index => CRONOGRAMA_INICIAL[index]);
+            setCronograma(reorderedCronograma);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar ordem salva:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSavedOrder();
+  }, [sessionId, hideControls]);
+
+  // Função para salvar a ordem dos cards
+  const saveCardOrder = async (newCronograma: typeof CRONOGRAMA_INICIAL) => {
+    if (!sessionId || hideControls) return;
+
+    try {
+      // Criar array com os índices da ordem atual
+      const cardOrder = newCronograma.map((item, index) =>
+        CRONOGRAMA_INICIAL.findIndex(originalItem => originalItem.titulo === item.titulo)
+      );
+
+      await actionPlanService.saveActionPlanOrder({
+        session_id: sessionId,
+        card_order: cardOrder,
+        card_data: newCronograma
+      });
+    } catch (error) {
+      console.error('Erro ao salvar ordem dos cards:', error);
+    }
+  };
 
   const handleDragStart = (index: number) => (e: React.DragEvent<HTMLDivElement>) => {
     setDragIndex(index);
@@ -170,6 +231,10 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
       const updated = [...prev];
       const [moved] = updated.splice(fromIndex, 1);
       updated.splice(toIndex, 0, moved);
+
+      // Salvar a nova ordem
+      saveCardOrder(updated);
+
       return updated;
     });
     setDragIndex(null);
@@ -290,7 +355,9 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls }) => {
         >
           <h3 className="text-xl font-semibold mb-6">Próximos Passos</h3>
           {!hideControls && (
-            <div className="text-xs text-muted-foreground mb-2">Arraste os cards para reordenar conforme a prioridade do cliente</div>
+            <div className="text-xs text-muted-foreground mb-2">
+              Arraste os cards para reordenar conforme a prioridade do cliente
+            </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {cronograma.map((fase, index) => (
