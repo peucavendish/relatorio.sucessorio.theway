@@ -157,26 +157,12 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
                     <p className="text-muted-foreground mb-3">{instrumento.descricao}</p>
                     <div>
                       <h4 className="text-sm font-medium mb-2">Vantagens:</h4>
-                      <ul className="grid md:grid-cols-2 gap-2">
-                        {instrumento.tipo === "Holding Familiar" && data?.tributario?.holdingFamiliar?.beneficios ? (
-                          data.tributario.holdingFamiliar.beneficios.map((beneficio, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                              <div className="text-accent mt-1">•</div>
-                              <span>{beneficio}</span>
-                            </li>
-                          ))
-                        ) : instrumento.tipo === "Previdência VGBL" && data?.tributario?.previdenciaVGBL?.vantagensSucessorias ? (
-                          data.tributario.previdenciaVGBL.vantagensSucessorias.map((vantagem, i) => (
+                      <ul className="space-y-2">
+                        {instrumento.vantagens && Array.isArray(instrumento.vantagens) && instrumento.vantagens.length > 0 ? (
+                          instrumento.vantagens.map((vantagem, i) => (
                             <li key={i} className="flex items-start gap-2 text-sm">
                               <div className="text-accent mt-1">•</div>
                               <span>{vantagem}</span>
-                            </li>
-                          ))
-                        ) : instrumento.tipo === "Mandato Duradouro" && data?.protecao?.protecaoJuridica?.mandatoDuradouro?.beneficios ? (
-                          data.protecao.protecaoJuridica.mandatoDuradouro.beneficios.map((beneficio, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                              <div className="text-accent mt-1">•</div>
-                              <span>{beneficio}</span>
                             </li>
                           ))
                         ) : (
@@ -229,7 +215,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
                     </div>
                   </div>
 
-                  <div>
+                  {/* <div>
                     <div className="text-sm text-muted-foreground mb-1">Vantagens sucessórias</div>
                     <ul className="space-y-2">
                       {data?.tributario?.previdenciaVGBL?.vantagensSucessorias ? (
@@ -245,7 +231,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
                         []
                       )}
                     </ul>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </HideableCard>

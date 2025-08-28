@@ -47,8 +47,8 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     financas: {
       patrimonioLiquido: userReports?.financas?.resumo?.patrimonio_liquido || 0,
       excedenteMensal: ((Array.isArray(userReports?.financas?.rendas)
-      ? userReports.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
-      : 0) - userReports.financas.resumo.despesas_mensais) || 0,
+        ? userReports.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+        : 0) - userReports.financas.resumo.despesas_mensais) || 0,
       rendas: userReports?.financas?.rendas || [],
       despesasMensais: userReports?.financas?.resumo?.despesas_mensais || 0,
       // incluir despesas detalhadas se existirem em userReports
@@ -66,8 +66,8 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     aposentadoria: {
       patrimonioLiquido: userReports?.financas?.resumo?.patrimonio_liquido || 0,
       excedenteMensal: ((Array.isArray(userReports?.financas?.rendas)
-      ? userReports.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
-      : 0) - userReports.financas.resumo.despesas_mensais) || 0,
+        ? userReports.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
+        : 0) - userReports.financas.resumo.despesas_mensais) || 0,
       totalInvestido: userReports?.financas?.composicao_patrimonial?.Investimentos || 0,
       ativos: userReports?.financas?.ativos?.map(a => ({
         tipo: a.tipo,
@@ -145,7 +145,10 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     const raw = getClientData().objetivos || [];
     return (Array.isArray(raw) ? raw : []).map((item: any) => {
       if (typeof item === 'string') return { titulo: item };
-      return { titulo: item?.titulo || item?.nome || 'Projeto', descricao: item?.descricao || item?.detalhes };
+      return {
+        titulo: item?.tipo || 'Objetivo',
+        descricao: `${item?.prazo || ''}${item?.prioridade ? ` | Prioridade ${item.prioridade}` : ''}`
+      };
     });
   };
 
@@ -232,41 +235,41 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
                   />
                 </CoverPage>
               </div>
-              
+
               <HideableSection sectionId="summary" hideControls={clientPropect}>
                 <FinancialSummary data={getClientData().financas} hideControls={clientPropect} />
               </HideableSection>
-              
+
               <HideableSection sectionId="protection" hideControls={clientPropect}>
                 <ProtectionPlanning data={getClientData()} hideControls={clientPropect} />
               </HideableSection>
-              
+
               <HideableSection sectionId="total-asset-allocation" hideControls={clientPropect}>
                 <TotalAssetAllocation data={userReports} hideControls={clientPropect} />
               </HideableSection>
-              
+
               <HideableSection sectionId="beach-house" hideControls={clientPropect}>
                 <BeachHouse data={userReports} hideControls={clientPropect} />
               </HideableSection>
-              
+
               <HideableSection sectionId="retirement" hideControls={clientPropect}>
                 <RetirementPlanning data={getClientData().aposentadoria} hideControls={clientPropect} />
               </HideableSection>
-              
+
               <HideableSection sectionId="tax" hideControls={clientPropect}>
                 <TaxPlanning data={getClientData()} hideControls={clientPropect} />
               </HideableSection>
-              
+
               <HideableSection sectionId="succession" hideControls={clientPropect}>
                 <SuccessionPlanning data={getClientData()} hideControls={clientPropect} />
               </HideableSection>
-              
+
               {false && (
                 <HideableSection sectionId="life-projects" hideControls={clientPropect}>
                   <LifeProjects data={getClientData()} hideControls={clientPropect} />
                 </HideableSection>
               )}
-              
+
               {!clientPropect && (
                 <>
                   <HideableSection sectionId="action-plan" hideControls={clientPropect}>
