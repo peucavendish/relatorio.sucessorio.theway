@@ -342,7 +342,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
                 <ListChecks size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">9. Plano de Ação</h2>
+            <h2 className="heading-2 mb-3">8. Plano de Ação</h2>
             <p className="card-description-standard max-w-2xl mx-auto">
               Conjunto de ações estratégicas para alcançar seus objetivos financeiros e patrimoniais
             </p>
@@ -353,7 +353,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
           ref={timelineRef}
           className="section-container mb-8 animate-on-scroll"
         >
-          <h3 className="text-xl font-semibold mb-6">Próximos Passos</h3>
+          <h3 className="heading-3 mb-6">Próximos Passos</h3>
           {!hideControls && (
             <div className="text-xs text-muted-foreground mb-2">
               Arraste os cards para reordenar conforme a prioridade do cliente
@@ -417,7 +417,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
         >
           {false && (
             <>
-              <h3 className="text-xl font-semibold mb-6">Ações Prioritárias</h3>
+              <h3 className="heading-3 mb-6">Ações Prioritárias</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {acoesPrioritarias.map((acao, index) => (
                   <Card key={index} className={acao.prioridade === 'Alta' ? 'border-financial-danger/50' : ''}>

@@ -89,12 +89,12 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
 }) => {
   const [valorImovelInput, setValorImovelInput] = useState<number>(valorImovel);
   const [entrada, setEntrada] = useState<number>(valorImovel * 0.2);
-  const [prazoFinanciamento, setPrazoFinanciamento] = useState<number>(30);
+  const [prazoFinanciamento, setPrazoFinanciamento] = useState<number>(35);
   // Taxas REAL e inflação (nominal será derivada)
   const [taxaRealFinanciamento, setTaxaRealFinanciamento] = useState<number>(0.075); // ~13% nominal com 5.5% inflação
-  const [prazoConsorcio, setPrazoConsorcio] = useState<number>(15);
+  const [prazoConsorcio, setPrazoConsorcio] = useState<number>(18);
   const [taxaAdministracaoConsorcio, setTaxaAdministracaoConsorcio] = useState<number>(0.18); // 18% do valor total
-  const [retornoRealInvestimento, setRetornoRealInvestimento] = useState<number>(0.045); // ~10% nominal com 5.5% inflação
+  const [retornoRealInvestimento, setRetornoRealInvestimento] = useState<number>(0.03); // ~10% nominal com 5.5% inflação
   const [inflacaoAnual, setInflacaoAnual] = useState<number>(0.055); // Inflação anual (ex-INCC)
 
   // Converter taxa anual para mensal
@@ -271,7 +271,7 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
       <CardHeader className="px-6 pb-0">
                   <div className="flex flex-col w-full gap-4">
             <div>
-              <CardTitle className="text-xl font-semibold">Simulador de Estratégias</CardTitle>
+              <CardTitle className="text-xl font-semibold"></CardTitle>
               <CardDescription className="mt-1">
                 Comparação com juros nominais derivados (Inflação + Taxa Real). O prazo do financiamento também é usado como horizonte para calcular o valor futuro do investimento nas estratégias de consórcio e compra à vista.
               </CardDescription>
@@ -433,7 +433,7 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
             <thead className="bg-muted/30">
               <tr>
                 <th className="py-2 px-3 text-left font-medium">Estratégia</th>
-                <th className="py-2 px-3 text-right font-medium">Parcela Mensal</th>
+                <th className="py-2 px-3 text-right font-medium">Parcela Mensal (Mês 1)</th>
                 <th className="py-2 px-3 text-right font-medium">Custo Total</th>
                 <th className="py-2 px-3 text-right font-medium">Melhor Opção</th>
               </tr>

@@ -3,8 +3,9 @@ import HideableCard from '@/components/ui/HideableCard';
 import StatusChip from '@/components/ui/StatusChip';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList, Cell, CartesianGrid } from 'recharts';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { formatCurrency } from '@/utils/formatCurrency';
+import { formatCurrency, formatCurrencyCompact } from '@/utils/formatCurrency';
 import { useCardVisibility } from '@/context/CardVisibilityContext';
 import { Card } from '@/components/ui/card';
 
@@ -50,6 +51,42 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
   const totalPassivosLista = (data?.passivos || []).reduce((s, p) => s + (Number(p?.valor) || 0), 0);
   const patrimonioLiquidoResumo = (data?.patrimonioLiquido || (totalAtivosLista - totalPassivosLista));
 
+  // Dados para gráfico mensal (Renda, Despesas, Excedente) + visão anual embutida
+  const monthlyChartData = [
+    {
+      name: 'Renda',
+      value: totalIncome,
+      annual: totalIncomeAnnual,
+      formatted: formatCurrency(totalIncome),
+      formattedAnnual: formatCurrency(totalIncomeAnnual),
+      fill: '#0ea5e9',
+    },
+    {
+      name: 'Despesas',
+      value: totalExpensesMonthly,
+      annual: totalExpensesAnnual,
+      formatted: formatCurrency(totalExpensesMonthly),
+      formattedAnnual: formatCurrency(totalExpensesAnnual),
+      fill: '#f43f5e',
+    },
+    {
+      name: 'Excedente',
+      value: surplusMonthly,
+      annual: surplusAnnual,
+      formatted: formatCurrency(surplusMonthly),
+      formattedAnnual: formatCurrency(surplusAnnual),
+      fill: surplusMonthly >= 0 ? '#22c55e' : '#ef4444',
+    },
+  ];
+
+  // Indicadores: % Endividamento e % Poupança
+  const endividamentoPercent = totalAtivosLista > 0
+    ? Math.round((totalPassivosLista / totalAtivosLista) * 100)
+    : 0;
+  const poupancaPercent = totalIncome > 0
+    ? Math.round((surplusMonthly / totalIncome) * 100)
+    : 0;
+
   return (
     <section className="py-16 px-4" id="summary">
       <div className="section-container">
@@ -64,7 +101,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 <DollarSign size={28} className="text-financial-info" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">2. Resumo Financeiro</h2>
+            <h2 className="heading-2 mb-3">1. Resumo Financeiro</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Visão geral da sua situação financeira atual, incluindo patrimônio,
               renda, gastos e composição patrimonial.
@@ -85,50 +122,21 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
           >
             <div className="card-grid-3">
               <div className="card-metric">
-                <h3 className="card-metric-label">Investimentos Financeiros</h3>
-                <div className="card-metric-value">
-                  {data.ativos.length > 0 && (
-                    <>
-                      <div>{formatCurrency(data.ativos[0].valor)}</div>
-                    </>
-                  )}
-                </div>
-                <StatusChip
-                  status="success"
-                  label="Sólido"
-                  icon={<TrendingUp size={14} />}
-                />
-              </div>
-
-              <div className="card-metric">
-                <h3 className="card-metric-label">Renda Esperada (12 meses)</h3>
-                <div className="card-metric-value">
-                  {formatCurrency(totalIncomeAnnual)}
-                </div>
+                <h3 className="card-metric-label">Receitas Esperadas (ano)</h3>
+                <div className="card-metric-value">{formatCurrency(totalIncomeAnnual)}</div>
                 <div className="card-metric-subtitle">{formatCurrency(totalIncome)} / mês</div>
-                <div className="card-status-container">
-                  {data.rendas.map((renda, index) => (
-                    <StatusChip
-                      key={index}
-                      status={renda.tributacao === 'Isento' ? 'success' : 'info'}
-                      label={`${renda.descricao || renda.fonte || 'Renda'}: ${formatCurrency(renda.valor)} /mês`}
-                      className="text-xs"
-                    />
-                  ))}
-                </div>
               </div>
 
               <div className="card-metric">
-                <h3 className="card-metric-label">Excedente Esperado (12 meses)</h3>
-                <div className="card-metric-value">
-                  {formatCurrency(surplusAnnual)}
-                </div>
+                <h3 className="card-metric-label">Despesas Esperadas (ano)</h3>
+                <div className="card-metric-value">{formatCurrency(totalExpensesAnnual)}</div>
+                <div className="card-metric-subtitle">{formatCurrency(totalExpensesMonthly)} / mês</div>
+              </div>
+
+              <div className="card-metric">
+                <h3 className="card-metric-label">Excedente Esperado (ano)</h3>
+                <div className="card-metric-value">{formatCurrency(surplusAnnual)}</div>
                 <div className="card-metric-subtitle">{formatCurrency(surplusMonthly)} / mês</div>
-                <StatusChip
-                  status={surplusMonthly > 0 ? 'success' : 'danger'}
-                  label={surplusMonthly > 0 ? 'Positivo' : 'Negativo'}
-                  icon={surplusMonthly > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                />
               </div>
             </div>
           </HideableCard>
@@ -148,50 +156,80 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
             >
               <div className="md:p-8">
                 <h3 className="card-title-standard">Renda vs. Despesas</h3>
-                <div className="card-progress-container">
-                  <div className="card-progress-header">
-                    <span className="card-progress-label">Renda Total</span>
-                    <div className="card-flex-between">
-                      <span className="card-progress-value">{formatCurrency(totalIncome)} / mês</span>
-                      <span className="card-progress-value text-muted-foreground">{formatCurrency(totalIncomeAnnual)} / ano</span>
-                    </div>
+                {/* KPIs anuais removidos (já exibidos no quadro superior) */}
+                {/* Gráfico mensal: Renda, Despesas e Excedente (layout aprimorado) */}
+                <div className="w-full">
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyChartData} margin={{ top: 24, right: 24, left: 8, bottom: 8 }} barCategoryGap={24} barGap={12}>
+                        <XAxis dataKey="name" interval={0} tickLine={false} axisLine={false} tickMargin={10} />
+                        <YAxis domain={[0, (dataMax: number) => Math.max(dataMax || 0, 1) * 1.25]} tickFormatter={(v) => formatCurrencyCompact(Number(v))} tickLine={false} axisLine={false} width={72} />
+                        <CartesianGrid strokeDasharray="4 4" strokeOpacity={0.25} />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                          formatter={(value: any, _name: any, payload: any) => {
+                            return [`${formatCurrency(Number(value))} / mês`, payload?.payload?.name || ''];
+                          }}
+                        />
+                        <defs>
+                          <linearGradient id="bar-income" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#38bdf8"/>
+                            <stop offset="100%" stopColor="#0ea5e9"/>
+                          </linearGradient>
+                          <linearGradient id="bar-expense" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#fb7185"/>
+                            <stop offset="100%" stopColor="#ef4444"/>
+                          </linearGradient>
+                          <linearGradient id="bar-surplus" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#34d399"/>
+                            <stop offset="100%" stopColor="#10b981"/>
+                          </linearGradient>
+                        </defs>
+                        <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={72}>
+                          {monthlyChartData.map((entry, index) => {
+                            const gradientId = entry.name === 'Renda' ? 'url(#bar-income)' : entry.name === 'Despesas' ? 'url(#bar-expense)' : 'url(#bar-surplus)';
+                            return (
+                              <Cell key={`cell-${index}`} fill={gradientId} />
+                            );
+                          })}
+                          <LabelList content={(labelProps: any) => {
+                            const { x, y, width, payload } = labelProps || {} as any;
+                            if (x == null || y == null) return null;
+                            const cx = (x as number) + ((width as number) || 0) / 2;
+                            const top = (y as number) - 10;
+                            const monthlyText = payload?.formatted ?? '';
+                            return (
+                              <text x={cx} y={top} textAnchor="middle" fill="#0f172a" fontSize={12} fontWeight={700}>
+                                <tspan x={cx} dy="0">{monthlyText}</tspan>
+                              </text>
+                            );
+                          }} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                  <ProgressBar
-                    value={totalIncome}
-                    max={totalIncome}
-                    size="lg"
-                    color="success"
-                  />
                 </div>
 
-                <div className="mb-2">
-                  <div className="flex justify-between mb-2">
-                    <span>Despesas</span>
-                    <div className="flex items-center gap-6">
-                      <span className="font-medium">{formatCurrency(totalExpensesMonthly)} / mês</span>
-                      <span className="font-medium text-muted-foreground">{formatCurrency(totalExpensesAnnual)} / ano</span>
-                    </div>
-                  </div>
-                  <ProgressBar
-                    value={totalExpensesMonthly}
-                    max={totalIncome}
-                    size="lg"
-                    color={totalExpensesMonthly > totalIncome ? 'danger' : 'warning'}
-                  />
-                </div>
+                
 
-                <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Excedente Esperado</span>
-                    <div className="text-xl font-semibold">
-                      {formatCurrency(surplusMonthly)} / mês
+                {/* Bloco de "Excedente Esperado" removido conforme solicitação */}
+
+                {/* Indicadores: Poupança e Endividamento */}
+                <div className="mt-4 grid md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">% de Poupança</span>
+                      <span className="text-accent font-semibold">{poupancaPercent}%</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">{formatCurrency(surplusAnnual)} / ano</div>
+                    <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Excedente Mensal / Renda Mensal</div>
                   </div>
-                  <StatusChip
-                    status={surplusMonthly > 0 ? 'success' : 'danger'}
-                    label={`${totalIncome > 0 ? Math.round((surplusMonthly / totalIncome) * 100) : 0}% da renda`}
-                  />
+                  <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">% de Endividamento</span>
+                      <span className="text-accent font-semibold">{endividamentoPercent}%</span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Total de Passivos / Total de Ativos</div>
+                  </div>
                 </div>
 
                 {/* Detalhamento de Rendas e Despesas */}

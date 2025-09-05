@@ -65,7 +65,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
             <div className="text-sm font-medium text-accent mb-2 tracking-wider">
               ALTA VISTA INVESTIMENTOS
             </div>
-            <h1 className="text-5xl font-bold mb-2">Planejamento Patrimonial</h1>
+            <h1 className="heading-1 mb-2">Planejamento Patrimonial</h1>
             <p className="text-muted-foreground">
               Preparado especialmente para <span className="font-medium text-foreground">{clientData.nome}</span>
             </p>
@@ -78,14 +78,14 @@ const CoverPage: React.FC<CoverPageProps> = ({
           className="mb-6 animate-on-scroll"
         >
           <Card className="md:p-8">
-            <h2 className="text-2xl font-semibold mb-4">Informações do Cliente</h2>
+            <h2 className="heading-2 mb-4">Informações do Cliente</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="flex items-start gap-3">
                 <div className="mt-1 bg-accent/10 p-2 rounded-full">
                   <User size={18} className="text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-medium">Cliente</h3>
+                  <h3 className="heading-3">Cliente</h3>
                   <p className="text-lg">{clientData.nome}</p>
                   <p className="text-sm text-muted-foreground">{clientData.idade} anos</p>
                 </div>
@@ -96,7 +96,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
                   <Users size={18} className="text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-medium">Estado Civil</h3>
+                  <h3 className="heading-3">Estado Civil</h3>
                   <p className="text-lg">{clientData.estadoCivil}</p>
                   <p className="text-sm text-muted-foreground">
                     {clientData.regimeCasamento}
@@ -109,7 +109,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
                   <MapPin size={18} className="text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-medium">Residência</h3>
+                  <h3 className="heading-3">Residência</h3>
                   <p className="text-lg">{clientData.residencia}</p>
                 </div>
               </div>
@@ -119,7 +119,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
                   <Calendar size={18} className="text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-medium">Data do relatório</h3>
+                  <h3 className="heading-3">Data do relatório</h3>
                   <p className="text-lg">{date}</p>
                 </div>
               </div>
@@ -133,7 +133,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
           className="animate-on-scroll delay-2"
         >
           <CardWithHighlight highlight>
-            <h2 className="text-2xl font-semibold mb-4">Sobre este relatório</h2>
+            <h2 className="heading-2 mb-4">Sobre este relatório</h2>
             <p className="mb-4">
               Este documento apresenta um planejamento patrimonial personalizado, elaborado
               especificamente para suas necessidades e objetivos. Ele contempla análises,

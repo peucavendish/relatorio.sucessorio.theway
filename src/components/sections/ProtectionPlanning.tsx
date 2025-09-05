@@ -10,7 +10,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer
@@ -72,7 +71,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                 <Shield size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">6. Proteção Patrimonial</h2>
+            <h2 className="heading-2 mb-3">5. Proteção Patrimonial</h2>
             <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
               {protectionData.resumo}
             </p>
@@ -105,7 +104,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
 
         {/* Grupo: Proteções em Caso de Falecimento */}
         <div className="mt-2 mb-6">
-          <h3 className="text-xl font-semibold">Proteções em Caso de Falecimento</h3>
+          <h3 className="heading-3">Proteções em Caso de Falecimento</h3>
           <p className="text-sm text-muted-foreground">Inclui planejamento sucessório e garantia de renda aos beneficiários.</p>
         </div>
 
@@ -138,8 +137,17 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                 0;
 
               const ativos = Array.isArray(data?.financas?.ativos) ? data.financas.ativos : [];
+              const normalize = (s: string) =>
+                String(s || "")
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '')
+                  .toLowerCase();
+
               const previdenciaEmAtivos = ativos
-                .filter((a: any) => /previd/i.test(String(a?.tipo || "") + String(a?.classe || "")))
+                .filter((a: any) => {
+                  const texto = normalize(`${a?.tipo ?? ''} ${a?.classe ?? ''}`);
+                  return texto.includes('previd') || texto.includes('previdencia');
+                })
                 .reduce((acc: number, a: any) => acc + (Number(a?.valor) || 0), 0);
 
               const vgblSaldo = Number(data?.tributario?.previdenciaVGBL?.saldoAtual || data?.tributario?.previdenciaVGBL?.saldo || 0);
@@ -180,6 +188,15 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                     <div className="text-sm text-muted-foreground">
                       Previdência VGBL/PGBL e Seguro de Vida costumam ficar fora do inventário e oferecem liquidez imediata.
                     </div>
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      <div className="font-medium text-foreground">Como calculamos o custo sucessório estimado</div>
+                      <ul className="list-disc pl-5 mt-1 space-y-1">
+                        <li>Correspondente a 14% do patrimônio líquido do cliente</li>
+                        <li>Inclui ITCMD (alíquota estimada entre 4% e 8%)</li>
+                        <li>Inclui custos do inventário (taxas e despesas cartorárias/judiciais)</li>
+                        <li>Inclui honorários jurídicos</li>
+                      </ul>
+                    </div>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <ChartContainer
@@ -192,7 +209,6 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                     >
                       <ResponsiveContainer>
                         <ReBarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis tickFormatter={(v) => `R$ ${(v / 1_000_000).toFixed(1)}Mi`} />
                           <ChartTooltip content={<ChartTooltipContent />} />
@@ -283,7 +299,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                   <div className="text-sm text-muted-foreground mb-1">Valor Sugerido</div>
                   <div className="text-xl font-bold text-accent">{formatCurrency(coberturaGarantiaRenda)}</div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Custo anual × anos até aposentadoria (limitado a 200 meses).
+                    Custo mensal × meses até aposentadoria (limitado a 200 meses).
                   </p>
                 </div>
 
@@ -331,7 +347,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
 
         {/* Grupo: Proteções em Vida */}
         <div className="mt-2 mb-6">
-          <h3 className="text-xl font-semibold">Proteções em Vida</h3>
+          <h3 className="heading-3">Proteções em Vida</h3>
           <p className="text-sm text-muted-foreground">Coberturas para proteção do patrimônio e responsabilidade enquanto em vida.</p>
         </div>
 
@@ -346,7 +362,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
             <div className="flex items-center gap-3">
               <Shield className="h-8 w-8 text-accent" />
               <div>
-                <CardTitle>Proteções Adicionais em Vida</CardTitle>
+                <CardTitle>Proteções Adicionais</CardTitle>
                 <CardDescription>Valores sugeridos com base nas suas despesas atuais.</CardDescription>
               </div>
             </div>
@@ -410,7 +426,17 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
               <div>
                 <h4 className="text-md font-medium mb-3">Riscos Cobertos</h4>
                 <ul className="space-y-2">
-                  {(protectionData.seguroPatrimonial.riscosProtegidos || []).map((risco: string, index: number) => (
+                  {((Array.isArray(protectionData?.seguroPatrimonial?.riscosProtegidos) && protectionData.seguroPatrimonial.riscosProtegidos.length > 0)
+                    ? protectionData.seguroPatrimonial.riscosProtegidos
+                    : [
+                      'Incêndio e queda de raio',
+                      'Roubo e furto qualificado',
+                      'Danos elétricos',
+                      'Vendaval, granizo e impacto de veículos',
+                      'Responsabilidade civil familiar',
+                      'Danos por água e quebra de vidros',
+                    ]
+                  ).map((risco: string, index: number) => (
                     <li key={index} className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-accent" />
                       <span>{risco}</span>
@@ -523,29 +549,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
           </HideableCard>
         </div>
 
-        {/* Additional Recommendations */}
-        <HideableCard
-          id="recomendacoes-adicionais"
-          isVisible={isCardVisible("recomendacoes-adicionais")}
-          onToggleVisibility={() => toggleCardVisibility("recomendacoes-adicionais")}
-          className={cn("bg-accent/5 border-accent/20")}
-        >
-          <CardHeader>
-            <CardTitle>{protectionData.recomendacoesAdicionais?.titulo || 'Recomendações Adicionais'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {(protectionData.recomendacoesAdicionais?.itens || []).map((item: string, index: number) => (
-                <li key={index} className="flex items-start gap-3">
-                  <div className="mt-1 h-5 w-5 rounded-full bg-accent/20 flex items-center justify-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-accent" />
-                  </div>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </HideableCard>
+
       </div>
     </section>
   );

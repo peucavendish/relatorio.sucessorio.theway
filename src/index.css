@@ -1,3 +1,8 @@
+
+/* Heading styles (project-wide) */
+.heading-1 { @apply text-5xl md:text-6xl font-bold; }
+.heading-2 { @apply text-4xl font-bold; }
+.heading-3 { @apply text-xl font-semibold; }
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -83,17 +88,16 @@
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
   }
 
-  /* Section styles for better scroll snap */
+  /* Section styles: smooth scrolling without snap/bounce */
   main {
-    scroll-snap-type: y proximity;
+    scroll-snap-type: none;
     overflow-y: auto;
     height: 100vh;
     scroll-behavior: smooth;
+    overscroll-behavior-y: contain;
   }
 
   main > div {
-    scroll-snap-align: start;
-    scroll-snap-stop: normal;
     padding-top: 5rem;
     padding-bottom: 5rem;
     scroll-margin-top: 5rem;

@@ -20,6 +20,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { calculateIrpfComparison } from '@/utils/irpf';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Card as UiCard } from '@/components/ui/card';
 
 interface TaxPlanningProps {
@@ -58,7 +59,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
     .filter((r: any) => /(doa[cç][aã]o)/i.test(r?.descricao || r?.fonte))
     .reduce((acc: number, r: any) => acc + (Number(r?.valorAnual || 0)), 0);
 
-  const modeloIR = tributario?.resumo?.modeloIR || 'A avaliar (completo x simplificado)';
+  // Modelo recomendado será obtido do comparativo calculado (fallback para resumo, se existir)
 
   const pgblAnnualMax = Math.max(0, rendaTributavelMensal * 12 * 0.12);
   const pgblMonthlySuggest = pgblAnnualMax / 12;
@@ -69,11 +70,46 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
   const rendaTributavelAnual = Math.max(0, rendaTributavelMensal * 12);
   const deducoesArray = Array.isArray(data?.tributario?.deducoes) ? data.tributario.deducoes : [];
   const findDeduction = (tipo: string) => deducoesArray.find((d: any) => (d?.tipo || '').toLowerCase() === tipo.toLowerCase());
-  const pgblValorAnualDefault = Number(findDeduction('PGBL')?.valor || 0);
+  // Defaults mapeados do JSON
+  const dependentesFromDeducao = Number(findDeduction('Dependentes')?.quantidade || 0);
+  const dependentesFromProtecao = Number(data?.protecao?.analiseNecessidades?.numeroDependentes || 0);
+  const numDependentesDefault = dependentesFromDeducao || dependentesFromProtecao || 0;
 
-  const [numDependentes, setNumDependentes] = useState<number>(Number(findDeduction('Dependentes')?.quantidade || 0));
-  const [gastoEducacao, setGastoEducacao] = useState<number>(Number(findDeduction('Educacao')?.valor || findDeduction('Educação')?.valor || 0));
-  const [gastoSaude, setGastoSaude] = useState<number>(Number(findDeduction('Saude')?.valor || findDeduction('Saúde')?.valor || 0));
+  // PGBL: prioriza valor explícito nas deduções; depois contribuição mensal em previdência PGBL; por fim percentual informado (ex.: "12%")
+  const pgblValorFromDed = Number(findDeduction('PGBL')?.valor || 0);
+  const previdenciaEhPgbl = (data?.previdencia_privada?.tipo || '').toString().toUpperCase() === 'PGBL';
+  const pgblValorFromMensal = previdenciaEhPgbl ? Number(data?.previdencia_privada?.contribuicao_mensal || 0) * 12 : 0;
+  const pgblPercentTxt = (findDeduction('PGBL')?.percentual || '').toString();
+  const percentMatch = /([0-9]+(?:[.,][0-9]+)?)\s*%/.exec(pgblPercentTxt);
+  const pgblValorFromPercent = percentMatch ? (parseFloat(percentMatch[1].replace(',', '.')) / 100) * rendaTributavelAnual : 0;
+  const pgblValorAnualDefault = pgblValorFromDed || pgblValorFromMensal || pgblValorFromPercent || 0;
+
+  const [numDependentes, setNumDependentes] = useState<number>(numDependentesDefault);
+  // Educação: usa dedução explícita; se ausente, soma despesas mensais de educação x 12
+  const despesasArray = Array.isArray(data?.financas?.despesas) ? data.financas.despesas : [];
+  const educacaoFromExpensesMonthly = despesasArray
+    .filter((d: any) => /educa/i.test(d?.tipo || d?.subtipo || ''))
+    .reduce((acc: number, d: any) => acc + (Number(d?.valor) || 0), 0);
+  const educacaoAnualFromExpenses = educacaoFromExpensesMonthly * 12;
+  const [gastoEducacao, setGastoEducacao] = useState<number>(
+    Number(
+      findDeduction('Educacao')?.valor ||
+      findDeduction('Educação')?.valor ||
+      educacaoAnualFromExpenses || 0
+    )
+  );
+  // Saúde: usa dedução explícita; se ausente, soma despesas mensais de saúde/planos x 12
+  const saudeFromExpensesMonthly = despesasArray
+    .filter((d: any) => /(sa[úu]de|plano|m[eé]dico|odont|hospital)/i.test(d?.tipo || d?.subtipo || ''))
+    .reduce((acc: number, d: any) => acc + (Number(d?.valor) || 0), 0);
+  const saudeAnualFromExpenses = saudeFromExpensesMonthly * 12;
+  const [gastoSaude, setGastoSaude] = useState<number>(
+    Number(
+      findDeduction('Saude')?.valor ||
+      findDeduction('Saúde')?.valor ||
+      saudeAnualFromExpenses || 0
+    )
+  );
   const [pgblAnual, setPgblAnual] = useState<number>(pgblValorAnualDefault);
 
   const irpf = useMemo(() => calculateIrpfComparison({
@@ -83,6 +119,8 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
     healthExpenses: gastoSaude || 0,
     pgblContributions: pgblAnual || 0,
   }), [rendaTributavelAnual, numDependentes, gastoEducacao, gastoSaude, pgblAnual]);
+
+  const modeloIR = irpf?.recommendedModel || tributario?.resumo?.modeloIR || '(Calculado abaixo)';
 
   return (
     <section className="min-h-screen py-16 px-4" id="tax">
@@ -98,7 +136,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
                 <Calculator size={28} className="text-financial-info" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">8. Planejamento Tributário</h2>
+            <h2 className="text-4xl font-bold mb-3">7. Planejamento Tributário</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Estratégias para otimização fiscal e redução da carga tributária através de estruturação
               patrimonial e organização financeira.
@@ -193,7 +231,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
         </div>
 
         {/* Comparativo IRPF: Completo vs Simplificado */}
-        {/* <div
+        { <div
           ref={comparativoRef as React.RefObject<HTMLDivElement>}
           className="mb-8 animate-on-scroll delay-2"
         >
@@ -225,21 +263,20 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Gastos com Educação (ano)</label>
-                  <Input type="number" min={0} value={gastoEducacao}
-                    onChange={(e) => setGastoEducacao(Number(e.target.value) || 0)} />
+                  <CurrencyInput value={gastoEducacao}
+                    onChange={(v) => setGastoEducacao(v)} />
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Despesas de Saúde (ano)</label>
-                  <Input type="number" min={0} value={gastoSaude}
-                    onChange={(e) => setGastoSaude(Number(e.target.value) || 0)} />
+                  <CurrencyInput value={gastoSaude}
+                    onChange={(v) => setGastoSaude(v)} />
                 </div>
               </div>
 
               <div className="grid md:grid-cols-4 gap-4">
-                <div className="md:col-span-2">
-                  <label className="text-sm text-muted-foreground mb-1 block">Contribuições PGBL (ano)</label>
-                  <Input type="number" min={0} value={pgblAnual}
-                    onChange={(e) => setPgblAnual(Number(e.target.value) || 0)} />
+                <div className="md:col-span-2 bg-muted/50 p-4 rounded-lg border border-border/50">
+                  <div className="text-sm text-muted-foreground mb-1">Contribuições PGBL (ano)</div>
+                  <div className="font-medium">{formatCurrency(pgblAnual)}</div>
                 </div>
                 <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
                   <div className="text-sm text-muted-foreground mb-1">Modelo recomendável</div>
@@ -282,9 +319,9 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
               </div>
             </CardFooter>
           </HideableCard>
-        </div> */}
+        </div> }
 
-        {/* Recomendações Estratégicas */}
+        {/* Recomendações Estratégicas }
         <div
           ref={recomendacoesRef as React.RefObject<HTMLDivElement>}
           className="mb-8 animate-on-scroll delay-2"
@@ -349,7 +386,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
               </div>
             </CardContent>
           </HideableCard>
-        </div>
+        </div>*/}
 
       </div>
     </section>

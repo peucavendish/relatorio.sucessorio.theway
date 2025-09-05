@@ -21,6 +21,7 @@ import PrintExportButton from '@/components/ui/PrintExportButton';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import SectionVisibilityControls from '@/components/layout/SectionVisibilityControls';
+import { useSectionVisibility } from '@/context/SectionVisibilityContext';
 import HideableSection from '@/components/ui/HideableSection';
 import SecurityIndicator from '@/components/sections/SecurityIndicator';
 import LifeProjects from '@/components/sections/LifeProjects';
@@ -36,6 +37,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
   const [user, setUser] = useState(null);
   const [userReports, setUserReports] = useState(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  
 
   const getClientData = () => ({
     cliente: {
@@ -203,6 +205,38 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Componente interno que aplica a regra de auto-ocultar dentro do provider
+  const AutoHideSections: React.FC<{ userReports: any }> = ({ userReports }) => {
+    const { isSectionVisible, toggleSectionVisibility, isLoading: visibilityLoading } = useSectionVisibility();
+    const [applied, setApplied] = React.useState(false);
+
+    useEffect(() => {
+      if (visibilityLoading || applied || !userReports) return;
+
+      try {
+        const shouldHide: Record<string, boolean> = {
+          'beach-house': !(userReports?.imovelDesejado?.objetivo?.valorImovel),
+          'succession': !(
+            (userReports?.sucessao?.situacaoAtual?.objetivosSucessorios?.length ?? 0) > 0 ||
+            (userReports?.sucessao?.instrumentos?.length ?? 0) > 0
+          )
+        };
+
+        Object.entries(shouldHide).forEach(([sectionId, hide]) => {
+          if (hide && isSectionVisible(sectionId)) {
+            toggleSectionVisibility(sectionId);
+          }
+        });
+
+        setApplied(true);
+      } catch (e) {
+        setApplied(true);
+      }
+    }, [visibilityLoading, applied, userReports, isSectionVisible, toggleSectionVisibility]);
+
+    return null;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -215,6 +249,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     <ThemeProvider>
       <CardVisibilityProvider>
         <SectionVisibilityProvider>
+          <AutoHideSections userReports={userReports} />
           <div className="relative h-screen overflow-hidden">
             <Header />
             <main className="h-[calc(100vh-64px)] overflow-y-auto">
@@ -285,8 +320,8 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
 
 
             </main>
-            <DotNavigation />
-            <MobileDotNavigation />
+            <DotNavigation clientMode={!!clientPropect} />
+            <MobileDotNavigation clientMode={!!clientPropect} />
             <FloatingActions userReports={userReports} />
             {!clientPropect && <SectionVisibilityControls />}
             {!clientPropect && <PrintExportButton />}

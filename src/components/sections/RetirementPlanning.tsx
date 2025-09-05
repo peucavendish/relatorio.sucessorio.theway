@@ -3,7 +3,6 @@ import { BarChart, Wallet, PiggyBank, LineChart, Calculator, Calendar, ArrowRigh
 import { Card } from '@/components/ui/card';
 import { CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import HideableCard from '@/components/ui/HideableCard';
-import StatusChip from "@/components/ui/StatusChip";
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import RetirementProjectionChart from '@/components/charts/RetirementProjectionChart';
@@ -132,7 +131,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
                 <PiggyBank size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">4. Planejamento de Aposentadoria</h2>
+            <h2 className="heading-2 mb-3">3. Planejamento de Aposentadoria</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Estratégias e projeções para garantir sua independência financeira e
               qualidade de vida na aposentadoria.
@@ -157,17 +156,17 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
               </CardDescription>
             </CardHeader>
             <CardContent className="grid md:grid-cols-3 gap-6">
-              <div className="flex flex-col items-center">
-                <div className="text-sm text-muted-foreground mb-1">Patrimônio Líquido</div>
+            <div className="flex flex-col items-center">
+                <div className="text-sm text-muted-foreground mb-1">Investimentos Financeiros Atuais</div>
                 <div className="text-2xl font-semibold">
-                  {formatCurrency(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0))}
+                  {formatCurrency(
+                    (data?.totalInvestido ??
+                      (data?.ativos
+                        ?.filter(asset => asset.tipo === 'Investimentos')
+                        .reduce((sum, asset) => sum + asset.valor, 0))) || 0
+                  )}
                 </div>
-                <div className="mt-1">
-                  <StatusChip
-                    status={(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0)) >= 0 ? "success" : "danger"}
-                    label={(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0)) >= 0 ? "Positivo" : "Negativo"}
-                  />
-                </div>
+                {/* indicador removido */}
               </div>
 
               <div className="flex flex-col items-center">
@@ -175,33 +174,20 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
                 <div className="text-2xl font-semibold">
                   {formatCurrency(data?.excedenteMensal || 0)}
                 </div>
-                <div className="mt-1">
-                  <StatusChip
-                    status={data?.excedenteMensal && data.excedenteMensal > 20000 ? "success" : "warning"}
-                    label={`${data?.excedenteMensal ? Math.round((data.excedenteMensal / 50000) * 100) : 0}% da renda`}
-                  />
-                </div>
+                {/* indicador removido */}
               </div>
 
               <div className="flex flex-col items-center">
-                <div className="text-sm text-muted-foreground mb-1">Investimentos Financeiros Atual</div>
+                <div className="text-sm text-muted-foreground mb-1">Patrimônio Líquido</div>
                 <div className="text-2xl font-semibold">
-                  {formatCurrency(data?.ativos
-                    ?.filter(asset => asset.tipo === 'Investimentos')
-                    .reduce((sum, asset) => sum + asset.valor, 0) || 0)}
+                  {formatCurrency(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0))}
                 </div>
-                <div className="mt-1">
-                  <StatusChip
-                    status={data?.ativos?.filter(asset => asset.tipo === 'Investimentos')
-                      .reduce((sum, asset) => sum + asset.valor, 0) > 2000000 ? "success" : "warning"}
-                    label={`${data?.ativos && data.patrimonioLiquido
-                      ? Math.round((data.ativos
-                        .filter(asset => asset.tipo === 'Investimentos')
-                        .reduce((sum, asset) => sum + asset.valor, 0) / Math.abs(data.patrimonioLiquido)) * 100)
-                      : 0}% do patrimônio`}
-                  />
-                </div>
+                {/* indicador removido */}
               </div>
+
+        
+
+
             </CardContent>
           </HideableCard>
         </div>
@@ -291,7 +277,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl">Projeção Patrimonial</CardTitle>
+              <CardTitle className="text-xl">Projeção Financeira</CardTitle>
               <CardDescription>
                 Análise da evolução do seu patrimônio ao longo do tempo
               </CardDescription>

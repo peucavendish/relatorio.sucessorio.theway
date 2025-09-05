@@ -224,7 +224,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
                 <Activity size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="card-title-standard text-4xl">10. Implementação e Monitoramento</h2>
+            <h2 className="heading-2">9. Implementação e Monitoramento</h2>
             <p className="card-description-standard max-w-2xl mx-auto">
               Acompanhamento de aportes e evolução do patrimônio de investimentos versus metas, com base em CDI (12m) e IPCA.
             </p>
@@ -232,11 +232,11 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
         </div>
 
         <div ref={sectionRef} className="section-container animate-on-scroll">
-          <h3 className="text-xl font-semibold mb-3">KPIs do trimestre</h3>
+          <h3 className="heading-3 mb-3">KPIs do trimestre</h3>
           <div className="relative overflow-visible">
             <div ref={captureRef}>
             <div className="mb-6">
-              <h4 className="text-lg font-semibold mb-2">Premissas Financeiras</h4>
+              <h3 className="heading-3 mb-2">Premissas Financeiras</h3>
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2"><Target className="h-4 w-4" /> Patrimônio Financeiro Atual</CardTitle>
@@ -252,7 +252,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
               </Card>
             </div>
             <div className="mb-6">
-              <h4 className="text-lg font-semibold mb-2">Premissas (Alta Vista)</h4>
+              <h3 className="heading-3 mb-2">Premissas (Alta Vista)</h3>
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Premissas Alta Vista</CardTitle>
@@ -346,7 +346,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
 
           {snapshots.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-3">Quadro de Revisões (trimestral)</h3>
+              <h3 className="heading-3 mb-3">Quadro de Revisões (trimestral)</h3>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[920px] text-sm">
                   <thead>
@@ -404,7 +404,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
 
           {false && snapshots.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-3">Histórico de Situações</h3>
+              <h3 className="heading-3 mb-3">Histórico de Situações</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {snapshots.map((s) => (
                   <Card key={s.id}>

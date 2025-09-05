@@ -47,7 +47,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
       descricao: "Transmissão de princípios e valores familiares",
       prazo: "Contínuo"
     }
-  ];
+  ];//
 
   // Valores para o impacto financeiro diretamente do JSON
   const patrimonioTotal = data?.sucessao?.situacaoAtual?.patrimonioTotal || 0;
@@ -75,7 +75,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
                 <Users size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">7. Planejamento Sucessório</h2>
+            <h2 className="text-4xl font-bold mb-3">6. Planejamento Sucessório</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Estratégias para garantir a transferência eficiente de patrimônio, preservar a harmonia familiar e minimizar custos tributários no processo sucessório.
             </p>
@@ -96,7 +96,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
               hideControls={hideControls}
             >
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 heading-3">
                   <GanttChart size={20} className="text-accent" />
                   Objetivos
                 </CardTitle>
@@ -135,7 +135,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
             onToggleVisibility={() => toggleCardVisibility("instrumentos-sucessorios")}
           >
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 heading-3">
                 <FileText size={20} className="text-accent" />
                 Instrumentos Sucessórios
               </CardTitle>
@@ -151,7 +151,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
                       <h3 className="text-lg font-medium">{instrumento.tipo}</h3>
                       <StatusChip
                         status="warning"
-                        label="Pendente"
+                        label=""
                       />
                     </div>
                     <p className="text-muted-foreground mb-3">{instrumento.descricao}</p>
@@ -185,7 +185,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
           ref={cardRef3 as React.RefObject<HTMLDivElement>}
           className="animate-on-scroll delay-3"
         >
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6">
             {/* Private Pension */}
             <HideableCard
               id="previdencia-privada-sucessao"
@@ -193,7 +193,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
               onToggleVisibility={() => toggleCardVisibility("previdencia-privada-sucessao")}
             >
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 heading-3">
                   <Shield size={20} className="text-accent" />
                   Previdência Privada
                 </CardTitle>
@@ -232,36 +232,6 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
                       )}
                     </ul>
                   </div> */}
-                </div>
-              </CardContent>
-            </HideableCard>
-
-            {/* Life Project */}
-            <HideableCard
-              id="projeto-vida-legado"
-              isVisible={isCardVisible("projeto-vida-legado")}
-              onToggleVisibility={() => toggleCardVisibility("projeto-vida-legado")}
-            >
-              <CardHeader>
-                <CardTitle className="card-title-standard flex items-center gap-2">
-                  <Users size={20} className="text-accent" />
-                  Projeto de Vida e Legado
-                </CardTitle>
-                <CardDescription>
-                  Planejamento além dos aspectos financeiros
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {projetoDeVida.map((fase, index) => (
-                    <div key={index} className="border-l-4 pl-4" style={{ borderColor: index === 1 ? '#FBBF24' : '#8B5CF6' }}>
-                      <div className="flex justify-between">
-                        <h3 className="font-medium">{fase.fase}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{fase.descricao}</p>
-                      <p className="text-xs mt-1">Prazo: {fase.prazo}</p>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </HideableCard>

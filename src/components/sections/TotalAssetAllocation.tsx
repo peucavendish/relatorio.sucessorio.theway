@@ -46,18 +46,21 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
 
   const composition = data?.financas?.composicao_patrimonial || {};
 
-  // Aplicar condição para Investimentos (subtrair Previdência e Internacional)
-  const compositionAdjusted = { ...composition };
-  if (compositionAdjusted['Investimentos']) {
-    const valorPrevidencia = compositionAdjusted['Previdência'] || 0;
-    const valorInternacional = compositionAdjusted['Internacional'] || 0;
-    compositionAdjusted['Investimentos'] = Math.max(0, compositionAdjusted['Investimentos'] - valorPrevidencia - valorInternacional);
-  }
+  // Não somar subgrupos (Curto Prazo, Previdência, Internacional) em Investimentos.
+  // Apenas excluir da exibição para evitar dupla contagem, mantendo Investimentos como informado no JSON.
+  const compositionAdjusted = { ...composition } as Record<string, number>;
+  compositionAdjusted['Investimentos'] = Number(compositionAdjusted['Investimentos'] || 0);
+  delete compositionAdjusted['Curto Prazo'];
+  delete compositionAdjusted['Previdência'];
+  delete compositionAdjusted['Internacional'];
 
-  const totalComposition = Object.values(compositionAdjusted).reduce((sum: number, value: any) => sum + (typeof value === 'number' ? value : 0), 0);
+  const totalComposition: number = Object.values(compositionAdjusted as Record<string, any>).reduce(
+    (sum: number, value: any) => sum + (Number(value) || 0),
+    0
+  );
   const compositionChartData = Object.entries(compositionAdjusted)
     .map(([key, value]: [string, any]) => {
-      const raw = typeof value === 'number' ? value : 0;
+      const raw: number = typeof value === 'number' ? value : 0;
       return {
         name: key,
         value: totalComposition > 0 ? Math.round((raw / totalComposition) * 100) : 0,
@@ -66,13 +69,13 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
         raw,
       } as { name: string; value: number; color: string; rawValue: string; raw: number };
     })
-    .filter((i) => i.raw > 0)
-    .sort((a, b) => b.value - a.value);
+    .filter((i: { raw: number }) => i.raw > 0)
+    .sort((a: { value: number }, b: { value: number }) => b.value - a.value);
 
   // KPIs dinâmicos
-  const totalAtivos = totalComposition;
-  const percentualImoveis = totalAtivos > 0 ? Math.round(((composition?.['Imóveis'] || 0) / totalAtivos) * 100) : 0;
-  const percentualFinanceiroLiquido = totalAtivos > 0 ? Math.round(((composition?.['Investimentos'] || 0) / totalAtivos) * 100) : 0;
+  const totalAtivos: number = Number(totalComposition);
+  const percentualImoveis: number = totalAtivos > 0 ? Math.round(((Number(composition?.['Imóveis']) || 0) / totalAtivos) * 100) : 0;
+  const percentualFinanceiroLiquido: number = totalAtivos > 0 ? Math.round(((Number(composition?.['Investimentos']) || 0) / totalAtivos) * 100) : 0;
   const diversificacao = compositionChartData.length;
   const maiorClasse = compositionChartData[0]?.name || '-';
   const maiorPercentual = compositionChartData[0]?.value || 0;
@@ -80,20 +83,21 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
 
   // Passivos e patrimônio líquido a partir dos dados consolidados
   const passivos = Array.isArray(data?.financas?.passivos) ? data.financas.passivos : [];
-  const totalPassivos = passivos.reduce((sum: number, p: any) => sum + (Number(p?.valor) || 0), 0);
-  const patrimonioLiquido = totalAtivos - totalPassivos;
+  const totalPassivos: number = passivos.reduce((sum: number, p: any) => sum + (Number(p?.valor) || 0), 0);
+  const patrimonioLiquido: number = totalAtivos - totalPassivos;
 
-  // Listas detalhadas de ativos para exibição
+  // Listas detalhadas de ativos para exibição (mostrar a lista completa do JSON)
   const ativos = Array.isArray(data?.financas?.ativos) ? data.financas.ativos : [];
-  const totalAtivosLista = ativos.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
-  const endividamento = totalAtivos > 0 ? Number(((totalPassivos / totalAtivos) * 100).toFixed(2)) : 0;
-  const rendaTotal = Array.isArray(data?.financas?.rendas)
+  const ativosExibicao = ativos;
+  const totalAtivosLista: number = ativosExibicao.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
+  const endividamento: number = totalAtivos > 0 ? Number(((totalPassivos / totalAtivos) * 100).toFixed(2)) : 0;
+  const rendaTotal: number = Array.isArray(data?.financas?.rendas)
     ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
     : 0;
-  const excedenteMensal = ((Array.isArray(data?.financas?.rendas)
+  const excedenteMensal: number = ((Array.isArray(data?.financas?.rendas)
     ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
-    : 0) - data.financas.resumo.despesas_mensais) || 0;
-  const poupanca = rendaTotal > 0 ? Number(((excedenteMensal / rendaTotal) * 100).toFixed(2)) : 0;
+    : 0) - (Number(data?.financas?.resumo?.despesas_mensais) || 0)) || 0;
+  const poupanca: number = rendaTotal > 0 ? Number(((excedenteMensal / rendaTotal) * 100).toFixed(2)) : 0;
   // Corrige despesasMensais: usa resumo.despesas_mensais se existir, senão soma todas as rendas
   const despesasMensais =
     Number(data?.financas?.resumo?.despesas_mensais) ||
@@ -101,7 +105,16 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
       ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
       : 0);
 
-  // Ativos de curto prazo / alta liquidez (heurística por palavras-chave)
+  // Ativos de curto prazo / alta liquidez (usar mapeamento explícito do JSON)
+  const shortTermAssetsExplicit = Array.isArray(data?.financas?.ativos)
+    ? data.financas.ativos.filter((a: any) => {
+        const tipo = String(a?.tipo || '').toLowerCase();
+        const classe = String(a?.classe || '').toLowerCase();
+        return tipo.includes('curto prazo') && classe.includes('alta liquidez');
+      })
+    : [];
+
+  // Fallback heurístico caso o JSON não traga o par exato (mantém robustez)
   const shortTermKeywords = [
     'selic', 'cdi', 'di', 'poupança', 'poupanca', 'caixa', 'cash', 'reserva', 'emergência', 'emergencia',
     'lci', 'lca', 'cdb', 'renda fixa', 'rf curto', 'curto prazo', 'money market', 'fundo di',
@@ -111,9 +124,11 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
     const haystack = `${asset?.classe || ''} ${asset?.descricao || ''} ${asset?.ticker || ''} ${asset?.nome || ''} ${asset?.tipo || ''}`.toLowerCase();
     return shortTermKeywords.some(k => haystack.includes(k));
   };
-  const shortTermAssets = Array.isArray(data?.financas?.ativos)
-    ? data.financas.ativos.filter((a: any) => isShortTerm(a))
-    : [];
+
+  const shortTermAssets = shortTermAssetsExplicit.length > 0
+    ? shortTermAssetsExplicit
+    : (Array.isArray(data?.financas?.ativos) ? data.financas.ativos.filter((a: any) => isShortTerm(a)) : []);
+
   const totalCurtoPrazo = shortTermAssets.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
   const numeroAtivosCurtoPrazo = shortTermAssets.length;
   // Horizonte de cobertura: ativos de curto prazo / custo de vida mensal
@@ -124,50 +139,35 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const progressoCor: 'success' | 'warning' | 'danger' =
     coberturaMeses >= 12 ? 'success' : coberturaMeses >= 6 ? 'warning' : 'danger';
 
-  // Exposição Geográfica dos Investimentos Financeiros (Brasil vs Exterior)
-  const investimentosFinanceiros = Array.isArray(data?.financas?.ativos)
-    ? data.financas.ativos.filter((a: any) => a?.tipo === 'Investimentos')
+  // Exposição Geográfica dos Investimentos (Brasil vs Exterior)
+  // Denominador: valor total de "Investimentos" informado em composicao_patrimonial
+  const totalInvestimentosComposicao: number = Number(data?.financas?.composicao_patrimonial?.['Investimentos'] || 0);
+
+  // Numerador (Exterior): ativos com tipo "Internacional" OU (tipo "Investimentos" e classe "Internacional")
+  const exteriorInvestimentos = Array.isArray(data?.financas?.ativos)
+    ? data.financas.ativos.filter((a: any) => {
+        const tipo = String(a?.tipo || '').toLowerCase();
+        const classe = String(a?.classe || '').toLowerCase();
+        return tipo === 'internacional' || (tipo.includes('invest') && classe.includes('internacional'));
+      })
     : [];
-  const totalInvestimentosFinanceiros = investimentosFinanceiros.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
-  const exteriorKeywords = [
-    'internacional', 'exterior', 'usd', 'dólar', 'dolar', 'euro', 'offshore', 'global', 'bdr', 'ivvb',
-    'nyse', 'nasdaq', 'treasury', 'tesouro americano', 'sp500', 'eua', 'us'
-  ];
-  const isExterior = (asset: any) => {
-    const haystack = `${asset?.classe || ''} ${asset?.descricao || ''} ${asset?.ticker || ''} ${asset?.nome || ''} ${asset?.tipo || ''}`.toLowerCase();
-    return exteriorKeywords.some(k => haystack.includes(k));
-  };
-  const valorExterior = investimentosFinanceiros.reduce((sum: number, a: any) => sum + (isExterior(a) ? (Number(a?.valor) || 0) : 0), 0);
-  const valorBrasil = Math.max(0, totalInvestimentosFinanceiros - valorExterior);
-  const pctExterior = totalInvestimentosFinanceiros > 0 ? Math.round((valorExterior / totalInvestimentosFinanceiros) * 100) : 0;
-  const pctBrasil = totalInvestimentosFinanceiros > 0 ? 100 - pctExterior : 0;
+  const valorExterior = exteriorInvestimentos.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
+  const valorBrasil = Math.max(0, totalInvestimentosComposicao - valorExterior);
+  const pctExterior = totalInvestimentosComposicao > 0 ? Math.round((valorExterior / totalInvestimentosComposicao) * 100) : 0;
+  const pctBrasil = totalInvestimentosComposicao > 0 ? 100 - pctExterior : 0;
   const recomendacaoExteriorPct = 18;
   const deltaExteriorPct = recomendacaoExteriorPct - pctExterior;
 
-  // Mock fallback when there are no detailed investment items
-  const baseInvestimentos = Number(data?.financas?.composicao_patrimonial?.['Investimentos'] || 0);
-  const mockTotal = baseInvestimentos > 0 ? baseInvestimentos : 100000;
-  const shouldMockExposure = totalInvestimentosFinanceiros === 0;
-
-  const shownPctExterior = shouldMockExposure ? recomendacaoExteriorPct : pctExterior;
-  const shownPctBrasil = shouldMockExposure ? (100 - recomendacaoExteriorPct) : pctBrasil;
-  const shownValorExterior = shouldMockExposure ? Math.round((mockTotal * shownPctExterior) / 100) : valorExterior;
-  const shownValorBrasil = shouldMockExposure ? Math.round((mockTotal * shownPctBrasil) / 100) : valorBrasil;
-  const shownTotalInvest = shouldMockExposure ? mockTotal : totalInvestimentosFinanceiros;
-  const shownDeltaExteriorPct = recomendacaoExteriorPct - shownPctExterior;
-
   const geoExposureData = [
-    { name: 'Brasil', value: shownPctBrasil, color: '#3B82F6', rawValue: formatCurrency(shownValorBrasil), raw: shownValorBrasil },
-    { name: 'Exterior', value: shownPctExterior, color: '#10B981', rawValue: formatCurrency(shownValorExterior), raw: shownValorExterior }
+    { name: 'Brasil', value: pctBrasil, color: '#3B82F6', rawValue: formatCurrency(valorBrasil), raw: valorBrasil },
+    { name: 'Exterior', value: pctExterior, color: '#10B981', rawValue: formatCurrency(valorExterior), raw: valorExterior }
   ].filter(i => i.raw > 0);
 
-  const alertClass = shouldMockExposure
-    ? 'bg-accent/10 text-accent'
-    : shownDeltaExteriorPct === 0
-      ? 'bg-emerald-500/10 text-emerald-700'
-      : (Math.abs(shownDeltaExteriorPct) >= 5
-        ? 'bg-financial-danger/10 text-financial-danger'
-        : 'bg-financial-warning/10 text-financial-warning');
+  const alertClass = deltaExteriorPct === 0
+    ? 'bg-emerald-500/10 text-emerald-700'
+    : (Math.abs(deltaExteriorPct) >= 5
+      ? 'bg-financial-danger/10 text-financial-danger'
+      : 'bg-financial-warning/10 text-financial-warning');
 
 
   return (
@@ -184,7 +184,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                 <BarChart size={28} className="text-financial-info" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">3. Gestão de Ativos</h2>
+            <h2 className="heading-2 mb-3">2. Gestão de Ativos</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Total Asset Allocation - Avaliar a alocação patrimonial completa do cliente (ativos financeiros e reais), identificando concentração, liquidez, coerência com os objetivos e perfil de risco.
             </p>
@@ -226,23 +226,8 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                   <div>
                     <h4 className="card-title-standard text-lg">Ativos</h4>
                     <div className="card-list">
-                      {ativos.map((asset: any, index: number) => {
-                        // Calcular valor para Investimentos - Financeiros
-                        let valorExibido = Number(asset?.valor) || 0;
-
-                        if (asset?.tipo === 'Investimentos' && asset?.classe === 'Financeiros') {
-                          // Encontrar valores de Previdência - Privada
-                          const previdenciaPrivada = ativos.find(a => a.tipo === 'Previdência' && a.classe === 'Privada');
-                          const valorPrevidencia = previdenciaPrivada ? Number(previdenciaPrivada.valor) || 0 : 0;
-
-                          // Encontrar valores de Internacional - Investimentos
-                          const internacionalInvestimentos = ativos.find(a => a.tipo === 'Internacional' && a.classe === 'Investimentos');
-                          const valorInternacional = internacionalInvestimentos ? Number(internacionalInvestimentos.valor) || 0 : 0;
-
-                          // Subtrair os valores de Previdência - Privada e Internacional - Investimentos
-                          valorExibido = valorExibido - valorPrevidencia - valorInternacional;
-                        }
-
+                      {ativosExibicao.map((asset: any, index: number) => {
+                        const valorExibido = Number(asset?.valor) || 0;
                         return (
                           <div key={index} className="card-list-item">
                             <span className="card-list-label">{asset?.tipo}{asset?.classe ? ` - ${asset.classe}` : ''}</span>
@@ -299,7 +284,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl">Estratégia Recomendada</CardTitle>
+              <CardTitle className="text-xl">Visão do Patrimônio</CardTitle>
               <CardDescription>
                 Análise técnica e recomendações para otimização patrimonial
               </CardDescription>
@@ -308,7 +293,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
               {/* Composição Patrimonial */}
               {compositionChartData && compositionChartData.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4">Composição Patrimonial</h3>
+                  <h3 className="heading-3 mb-4">Composição Patrimonial</h3>
                   <div className="grid md:grid-cols-2 gap-6 items-center">
                     <DonutChart
                       data={compositionChartData}
@@ -337,7 +322,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
 
               {/* Exposição Geográfica dos Investimentos Financeiros */}
               <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4">Exposição Geográfica dos Investimentos Financeiros</h3>
+                <h3 className="heading-3 mb-4">Exposição Geográfica dos Investimentos Financeiros</h3>
                 <div className="grid md:grid-cols-2 gap-6 items-center">
                   <DonutChart
                     data={geoExposureData}
@@ -347,55 +332,47 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                     legendPosition="side"
                   />
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
-                        <div className="text-xs text-muted-foreground">Total Investimentos Financeiros</div>
-                        <div className="text-lg font-semibold">{formatCurrency(shownTotalInvest)}</div>
-                      </div>
-                      <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
-                        <div className="text-xs text-muted-foreground">Exterior</div>
-                        <div className="text-lg font-semibold">{formatCurrency(shownValorExterior)} <span className="text-sm text-muted-foreground">({shownPctExterior}%)</span></div>
-                      </div>
-                      <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
-                        <div className="text-xs text-muted-foreground">Brasil</div>
-                        <div className="text-lg font-semibold">{formatCurrency(shownValorBrasil)} <span className="text-sm text-muted-foreground">({shownPctBrasil}%)</span></div>
-                      </div>
-                      <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
-                        <div className="text-xs text-muted-foreground">Recomendação Exterior</div>
-                        <div className="text-lg font-semibold">18%</div>
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {shouldMockExposure ? (
-                        <div className={`p-2 rounded-md ${alertClass}`}>Dados mockados para ilustração (18% no exterior).</div>
-                      ) : (
-                        <div className={`p-2 rounded-md ${alertClass}`}>
-                          {shownDeltaExteriorPct > 0 ? (
-                            <span>Exposição ao exterior abaixo do recomendado em {Math.abs(shownDeltaExteriorPct)} p.p.</span>
-                          ) : shownDeltaExteriorPct < 0 ? (
-                            <span>Exposição ao exterior acima do recomendado em {Math.abs(shownDeltaExteriorPct)} p.p.</span>
-                          ) : (
-                            <span>Exposição ao exterior alinhada à recomendação.</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                  <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
+                  <div className="text-xs text-muted-foreground">Exterior</div>
+                  <div className="text-lg font-semibold">{formatCurrency(valorExterior)} <span className="text-sm text-muted-foreground">({pctExterior}%)</span></div>
+                  </div>
+                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
+                  <div className="text-xs text-muted-foreground">Brasil</div>
+                  <div className="text-lg font-semibold">{formatCurrency(valorBrasil)} <span className="text-sm text-muted-foreground">({pctBrasil}%)</span></div>
+                  </div>
+                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
+                  <div className="text-xs text-muted-foreground">Recomendação Exterior</div>
+                  <div className="text-lg font-semibold">18%</div>
+                  </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                  <div className={`p-2 rounded-md ${alertClass}`}>
+                    {deltaExteriorPct > 0 ? (
+                        <span>Exposição ao exterior abaixo do recomendado em {Math.abs(deltaExteriorPct)} p.p.</span>
+                      ) : deltaExteriorPct < 0 ? (
+                      <span>Exposição ao exterior acima do recomendado em {Math.abs(deltaExteriorPct)} p.p.</span>
+                  ) : (
+                      <span>Exposição ao exterior alinhada à recomendação.</span>
+                  )}
+                  </div>
+                  </div>
 
-                    <div className="mt-3">
-                      <div className="text-xs text-muted-foreground mb-1">Comparação vs. Meta (18% no exterior)</div>
-                      <div className="relative h-3 rounded-full bg-muted overflow-hidden">
-                        <div className="absolute inset-y-0 left-0 bg-blue-500" style={{ width: `${shownPctBrasil}%` }} />
-                        <div className="absolute inset-y-0" style={{ left: `${shownPctBrasil}%`, width: `${shownPctExterior}%`, backgroundColor: '#10B981' }} />
-                        <div className="absolute -top-1 bottom-0" style={{ left: `${recomendacaoExteriorPct}%` }}>
-                          <div className="w-0.5 h-4 bg-foreground/70"></div>
-                        </div>
-                      </div>
-                      <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
-                        <span>Brasil {shownPctBrasil}%</span>
-                        <span>Meta Exterior 18%</span>
-                        <span>Exterior {shownPctExterior}%</span>
-                      </div>
+                  <div className="mt-3">
+                  <div className="text-xs text-muted-foreground mb-1">Comparação vs. Meta (18% no exterior)</div>
+                  <div className="relative h-3 rounded-full bg-muted overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 bg-blue-500" style={{ width: `${pctBrasil}%` }} />
+                  <div className="absolute inset-y-0" style={{ left: `${pctBrasil}%`, width: `${pctExterior}%`, backgroundColor: '#10B981' }} />
+                    <div className="absolute -top-1 bottom-0" style={{ left: `${recomendacaoExteriorPct}%` }}>
+                        <div className="w-0.5 h-4 bg-foreground/70"></div>
+                          </div>
                     </div>
+                  <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+                    <span>Brasil {pctBrasil}%</span>
+                  <span>Meta Exterior 18%</span>
+                  <span>Exterior {pctExterior}%</span>
+                  </div>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -403,19 +380,19 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
               {/* Resumo Executivo (dinâmico) */}
               <div className="grid md:grid-cols-3 gap-6 mb-8">
                 <div className="text-center">
-                  <h3 className="text-muted-foreground text-sm mb-1">Total de Ativos</h3>
+                  <h3 className="heading-3 text-muted-foreground mb-1">Total de Ativos</h3>
                   <div className="text-3xl font-bold mb-1">{formatCurrency(totalAtivos)}</div>
                   <div className="text-sm text-muted-foreground">Patrimônio Total</div>
                 </div>
 
                 <div className="text-center">
-                  <h3 className="text-muted-foreground text-sm mb-1">% Imobilizado</h3>
+                  <h3 className="heading-3 text-muted-foreground mb-1">% Imobilizado</h3>
                   <div className="text-3xl font-bold mb-1 {percentualImoveis>=50?'text-destructive':''}">{percentualImoveis}%</div>
                   <div className="text-sm text-muted-foreground">{baixaLiquidez ? 'Alta concentração' : 'Equilíbrio'}</div>
                 </div>
 
                 <div className="text-center">
-                  <h3 className="text-muted-foreground text-sm mb-1">Diversificação</h3>
+                  <h3 className="heading-3 text-muted-foreground mb-1">Diversificação</h3>
                   <div className="text-3xl font-bold mb-1 text-accent">{diversificacao}</div>
                   <div className="text-sm text-muted-foreground">Classes de ativos</div>
                 </div>
@@ -423,24 +400,10 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
 
               {/* Diagnóstico Consolidado */}
               <div className="grid md:grid-cols-2 gap-8 mb-8">
-                {/* Indicadores Financeiros */}
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold mb-4">📊 Indicadores Financeiros</h3>
+                {/* Indicadores de Liquidez (mantidos aqui) */}
+                <div className="space-y-4 md:col-span-2">
+                  <h3 className="heading-3 mb-4">Indicador de Liquidez</h3>
                   <div className="space-y-3">
-                    <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">% de Endividamento</span>
-                        <span className="text-accent font-semibold">{endividamento}%</span>
-                      </div>
-                      <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Total de Passivos / Total de Ativos</div>
-                    </div>
-                    <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">% de Poupança</span>
-                        <span className="text-accent font-semibold">{poupanca}%</span>
-                      </div>
-                      <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Excedente Mensal / Renda Total Mensal</div>
-                    </div>
                     <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Horizonte de Cobertura</span>
@@ -448,9 +411,13 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                       </div>
                       <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
                         <span>Ativos de curto prazo: {numeroAtivosCurtoPrazo}</span>
+                        <span>Valor total CP: {formatCurrency(totalCurtoPrazo)}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+                        <span></span>
                         <span>Recomendação Alta Vista: {metaCoberturaMeses} meses</span>
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Ativos de curto prazo / Custo de vida mensal</div>
+                      <div className="text-[11px] text-muted-foreground mt-1">Cálculo: "Curto Prazo - Alta Liquidez" / Despesas mensais</div>
                       <div className="mt-3">
                         <ProgressBar
                           value={coberturaMeses}
@@ -467,8 +434,6 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                     </div>
                   </div>
                 </div>
-
-
               </div>
 
               {/* Insights e Recomendações */}
