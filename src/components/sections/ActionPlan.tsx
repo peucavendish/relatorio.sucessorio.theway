@@ -5,7 +5,8 @@ import {
   Clock,
   ListChecks,
   User,
-  Building2
+  Building2,
+  Check
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,13 @@ import {
   CardHeader,
   CardTitle
 } from '../ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 import StatusChip from '@/components/ui/StatusChip';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -49,6 +57,7 @@ CardWithHighlight.displayName = "CardWithHighlight";
 // Mapear próximos passos usando os dados do JSON - movido para fora do componente
 const CRONOGRAMA_INICIAL = [
   {
+    id: "sucessorio-tributario",
     titulo: "Sucessório e Tributário",
     descricao: "Planejamento sucessório e otimização tributária",
     icone: "⚖️",
@@ -61,6 +70,7 @@ const CRONOGRAMA_INICIAL = [
     ]
   },
   {
+    id: "diagnostico-alocacao",
     titulo: "Diagnóstico de Alocação",
     descricao: "Análise e reestruturação da alocação de investimentos",
     icone: "📊",
@@ -73,6 +83,7 @@ const CRONOGRAMA_INICIAL = [
     ]
   },
   {
+    id: "projetos-imobilizados",
     titulo: "Projetos Imobilizados",
     descricao: "Estruturação e otimização de investimentos em imóveis",
     icone: "🏠",
@@ -85,6 +96,7 @@ const CRONOGRAMA_INICIAL = [
     ]
   },
   {
+    id: "internacional",
     titulo: "Internacional",
     descricao: "Planejamento e estruturação para atuação e proteção internacional",
     icone: "🌍",
@@ -97,6 +109,7 @@ const CRONOGRAMA_INICIAL = [
     ]
   },
   {
+    id: "protecao-patrimonial",
     titulo: "Proteção Patrimonial",
     descricao: "Implementação de estratégias para proteção do patrimônio",
     icone: "🛡️",
@@ -109,8 +122,9 @@ const CRONOGRAMA_INICIAL = [
     ]
   },
   {
+    id: "corporate-solucoes-pj",
     titulo: "Corporate (Soluções PJ)",
-    descricao: "Soluções para pessoa jurídica: estrutura, caixa, investimentos e proteção",
+    descricao: "Soluções para PJ: estrutura, caixa, investimentos e proteção",
     icone: "🏢",
     cor: "bg-amber-500/10 text-amber-600 border-amber-200",
     acoes: [
@@ -150,6 +164,8 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
   const [cronograma, setCronograma] = useState(CRONOGRAMA_INICIAL);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [activatedCards, setActivatedCards] = useState<Set<string>>(new Set());
+  const [openModal, setOpenModal] = useState<string | null>(null);
 
   // Carregar ordem salva quando o componente montar
   useEffect(() => {
@@ -329,6 +345,32 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
 
   const specialistUrl = 'https://outlook.office.com/bookwithme/user/431917f0f5654e55bb2fa25f5b91cc7c@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=pcard';
 
+  const consultores = [
+    'Alexandre Faustino',
+    'Daniel Aveiro', 
+    'Fabio Hassui',
+    'Moisés Santos'
+  ];
+
+  const handleSpecialistClick = (cardId: string) => {
+    // Apenas o card de "Proteção Patrimonial" abre o modal
+    if (cardId === "protecao-patrimonial") {
+      setOpenModal(cardId);
+    } else {
+      // Para outros cards, comportamento original
+      setActivatedCards(prev => new Set([...prev, cardId]));
+      window.open(specialistUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleAgendaClick = (consultor: string) => {
+    if (openModal) {
+      setActivatedCards(prev => new Set([...prev, openModal]));
+      setOpenModal(null);
+      window.open(specialistUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <section className="py-16 px-4" id="action-plan">
       <div className="section-container">
@@ -353,7 +395,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
           ref={timelineRef}
           className="section-container mb-8 animate-on-scroll"
         >
-          <h3 className="heading-3 mb-6">Próximos Passos</h3>
+          <h3 className="card-title-standard text-lg">Próximos Passos</h3>
           {!hideControls && (
             <div className="text-xs text-muted-foreground mb-2">
               Arraste os cards para reordenar conforme a prioridade do cliente
@@ -364,7 +406,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
               <Card
                 key={index}
                 className={cn(
-                  "group hover:shadow-lg transition-all duration-300 border-2 hover:border-accent/50",
+                  "group hover:shadow-lg transition-all duration-300 border-2 hover:border-accent/50 h-full flex flex-col relative",
                   dragIndex === index && "border-accent/70 bg-accent/5"
                 )}
                 draggable={!hideControls}
@@ -372,12 +414,22 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
                 onDragOver={handleDragOver}
                 onDrop={handleDrop(index)}
               >
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-full ${fase.cor} border-2`}>
+                {activatedCards.has(fase.id) && (
+                  <div className="absolute top-3 right-3 z-10">
+                    <div className="bg-green-500 text-white rounded-full p-1.5 shadow-lg">
+                      <Check className="h-4 w-4" />
+                    </div>
+                    <div className="absolute top-8 right-0 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap shadow-lg">
+                      Área acionada
+                    </div>
+                  </div>
+                )}
+                <CardHeader className="pb-4 flex-shrink-0">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-full ${fase.cor} border-2 flex-shrink-0`}>
                       <span className="text-2xl">{fase.icone}</span>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-h-[80px] flex flex-col justify-center">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium bg-accent/10 text-accent px-2 py-1 rounded-full">
                           Passo {index + 1}
@@ -391,8 +443,8 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="space-y-2 mb-4">
+                <CardContent className="pt-0 flex flex-col h-full">
+                  <ul className="space-y-2 flex-grow">
                     {fase.acoes.map((acao, i) => (
                       <li key={i} className="flex items-start gap-3">
                         <div className="w-2 h-2 rounded-full bg-accent mt-2 flex-shrink-0"></div>
@@ -400,11 +452,15 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
                       </li>
                     ))}
                   </ul>
-                  <Button asChild size="sm" className="w-full group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
-                    <a href={specialistUrl} target="_blank" rel="noopener noreferrer">
+                  <div className="mt-6">
+                    <Button 
+                      size="sm" 
+                      className="w-full group-hover:bg-accent group-hover:text-accent-foreground transition-colors"
+                      onClick={() => handleSpecialistClick(fase.id)}
+                    >
                       Acionamento do Especialista
-                    </a>
-                  </Button>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -467,6 +523,32 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
           )}
         </div>
       </div>
+
+      {/* Modal de Consultores */}
+      <Dialog open={openModal !== null} onOpenChange={() => setOpenModal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Escolha um Consultor</DialogTitle>
+            <DialogDescription>
+              Selecione um dos nossos especialistas para agendar uma reunião
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {consultores.map((consultor, index) => (
+              <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
+                <span className="font-medium">{consultor}</span>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleAgendaClick(consultor)}
+                  className="bg-accent hover:bg-accent/90"
+                >
+                  Agenda
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

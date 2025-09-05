@@ -44,8 +44,8 @@ const SecurityIndicator: React.FC<SecurityIndicatorProps> = ({ scoreFinanceiro, 
 						hideControls={hideControls}
 					>
 						<CardHeader className="pb-2">
-							<CardTitle className="flex items-center gap-2 text-xl">
-								<ShieldCheck className="text-accent h-5 w-5" />
+							<CardTitle className="card-title-standard text-lg">
+								{/* <ShieldCheck className="text-accent h-5 w-5" /> */}
 								Indicador de Segurança Financeira
 							</CardTitle>
 							<CardDescription>

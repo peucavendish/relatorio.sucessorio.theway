@@ -104,7 +104,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
 
         {/* Grupo: Proteções em Caso de Falecimento */}
         <div className="mt-2 mb-6">
-          <h3 className="heading-3">Proteções em Caso de Falecimento</h3>
+          <h3 className="card-title-standard text-lg">Proteções em Caso de Falecimento</h3>
           <p className="text-sm text-muted-foreground">Inclui planejamento sucessório e garantia de renda aos beneficiários.</p>
         </div>
 
@@ -297,7 +297,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
               <div>
                 <div className="mb-4">
                   <div className="text-sm text-muted-foreground mb-1">Valor Sugerido</div>
-                  <div className="text-xl font-bold text-accent">{formatCurrency(coberturaGarantiaRenda)}</div>
+                  <div className="card-title-standard text-lg font-bold text-accent">{formatCurrency(coberturaGarantiaRenda)}</div>
                   <p className="text-sm text-muted-foreground mt-1">
                     Custo mensal × meses até aposentadoria (limitado a 200 meses).
                   </p>
@@ -347,7 +347,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
 
         {/* Grupo: Proteções em Vida */}
         <div className="mt-2 mb-6">
-          <h3 className="heading-3">Proteções em Vida</h3>
+          <h3 className="card-title-standard text-lg">Proteções em Vida</h3>
           <p className="text-sm text-muted-foreground">Coberturas para proteção do patrimônio e responsabilidade enquanto em vida.</p>
         </div>
 
@@ -414,12 +414,12 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
               <div>
                 <div className="mb-4">
                   <div className="text-sm text-muted-foreground mb-1">Valor Sugerido</div>
-                  <div className="text-xl font-bold text-accent">
+                  <div className="card-title-standard text-lg font-bold text-accent">
                     {formatCurrency(data?.financas?.composicaoPatrimonial?.Imóveis || 0)}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  {/* <p className="text-sm text-muted-foreground mt-1">
                     {`Bens imóveis: ${formatCurrency(data?.financas?.composicaoPatrimonial?.Imóveis || 0)}`}
-                  </p>
+                  </p> */}
                 </div>
               </div>
 
@@ -471,7 +471,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                 <div>
                   <div className="mb-4">
                     <div className="text-sm text-muted-foreground mb-1">Valor Sugerido</div>
-                    <div className="text-xl font-bold text-accent">
+                    <div className="card-title-standard text-lg font-bold text-accent">
                       {typeof protectionData?.seguroDO?.limiteRecomendado === 'number'
                         ? formatCurrency(protectionData.seguroDO.limiteRecomendado)
                         : (typeof protectionData?.seguroDO?.limiteRecomendado === 'string'
@@ -489,7 +489,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                       'Responsabilidade civil de administradores'
                     ]).map((risco: string, index: number) => (
                       <li key={index} className="flex items-center gap-2">
-                        <Umbrella className="h-4 w-4 text-accent" />
+                        <Umbrella className="h-4 w-4 text-accent flex-shrink-0" />
                         <span>{risco}</span>
                       </li>
                     ))}
@@ -520,7 +520,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                 <div>
                   <div className="mb-4">
                     <div className="text-sm text-muted-foreground mb-1">Valor Sugerido</div>
-                    <div className="text-xl font-bold text-accent">
+                    <div className="card-title-standard text-lg font-bold text-accent">
                       {typeof protectionData?.seguroInternacional?.limiteRecomendado === 'number'
                         ? formatCurrency(protectionData.seguroInternacional.limiteRecomendado)
                         : (typeof protectionData?.seguroInternacional?.limiteRecomendado === 'string'
@@ -538,7 +538,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                       'Assistência jurídica/repasse emergencial'
                     ]).map((risco: string, index: number) => (
                       <li key={index} className="flex items-center gap-2">
-                        <Plane className="h-4 w-4 text-accent" />
+                        <Plane className="h-4 w-4 text-accent flex-shrink-0" />
                         <span>{risco}</span>
                       </li>
                     ))}

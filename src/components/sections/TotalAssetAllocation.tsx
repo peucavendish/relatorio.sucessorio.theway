@@ -203,7 +203,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl">Balanço Patrimonial</CardTitle>
+              <CardTitle className="card-title-standard text-lg">Balanço Patrimonial</CardTitle>
               <CardDescription>Consolidação de ativos, passivos e patrimônio líquido</CardDescription>
             </CardHeader>
             <CardContent>
@@ -224,7 +224,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
               <div className="card-divider">
                 <div className="card-grid-2">
                   <div>
-                    <h4 className="card-title-standard text-lg">Ativos</h4>
+                    <h4 className="heading-3 mb-4">Ativos</h4>
                     <div className="card-list">
                       {ativosExibicao.map((asset: any, index: number) => {
                         const valorExibido = Number(asset?.valor) || 0;
@@ -245,7 +245,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                     </div>
                   </div>
                   <div>
-                    <h4 className="card-title-standard text-lg">Passivos</h4>
+                    <h4 className="heading-3 mb-4">Passivos</h4>
                     {passivos && passivos.length > 0 ? (
                       <div className="card-list">
                         {passivos.map((liability: any, index: number) => (
@@ -284,7 +284,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl">Visão do Patrimônio</CardTitle>
+              <CardTitle className="card-title-standard text-lg">Visão do Patrimônio</CardTitle>
               <CardDescription>
                 Análise técnica e recomendações para otimização patrimonial
               </CardDescription>
@@ -380,20 +380,20 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
               {/* Resumo Executivo (dinâmico) */}
               <div className="grid md:grid-cols-3 gap-6 mb-8">
                 <div className="text-center">
-                  <h3 className="heading-3 text-muted-foreground mb-1">Total de Ativos</h3>
+                  <h3 className="card-metric-label">Total de Ativos</h3>
                   <div className="text-3xl font-bold mb-1">{formatCurrency(totalAtivos)}</div>
                   <div className="text-sm text-muted-foreground">Patrimônio Total</div>
                 </div>
 
                 <div className="text-center">
-                  <h3 className="heading-3 text-muted-foreground mb-1">% Imobilizado</h3>
+                  <h3 className="card-metric-label">% Imobilizado</h3>
                   <div className="text-3xl font-bold mb-1 {percentualImoveis>=50?'text-destructive':''}">{percentualImoveis}%</div>
-                  <div className="text-sm text-muted-foreground">{baixaLiquidez ? 'Alta concentração' : 'Equilíbrio'}</div>
+                  {/* <div className="text-sm text-muted-foreground">{baixaLiquidez ? 'Alta concentração' : 'Equilíbrio'}</div> */}
                 </div>
 
                 <div className="text-center">
-                  <h3 className="heading-3 text-muted-foreground mb-1">Diversificação</h3>
-                  <div className="text-3xl font-bold mb-1 text-accent">{diversificacao}</div>
+                  <h3 className="card-metric-label">Diversificação</h3>
+                  <div className="text-3xl font-medium mb-1 text-black">{diversificacao}</div>
                   <div className="text-sm text-muted-foreground">Classes de ativos</div>
                 </div>
               </div>
@@ -407,7 +407,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                     <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Horizonte de Cobertura</span>
-                        <span className="text-accent font-semibold">{horizonteCobertura} meses</span>
+                        <span className="text-black font-medium">{horizonteCobertura} meses</span>
                       </div>
                       <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
                         <span>Ativos de curto prazo: {numeroAtivosCurtoPrazo}</span>
@@ -415,7 +415,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                       </div>
                       <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
                         <span></span>
-                        <span>Recomendação Alta Vista: {metaCoberturaMeses} meses</span>
+                        <span className="text-black font-medium">Recomendação Alta Vista: {metaCoberturaMeses} meses</span>
                       </div>
                       <div className="text-[11px] text-muted-foreground mt-1">Cálculo: "Curto Prazo - Alta Liquidez" / Despesas mensais</div>
                       <div className="mt-3">

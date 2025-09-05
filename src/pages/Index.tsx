@@ -256,6 +256,11 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
               <div className="min-h-screen">
                 <CoverPage
                   clientData={getClientData().cliente}
+                  date={userReports?.created_at ? new Date(userReports.created_at).toLocaleDateString('pt-BR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : undefined}
                   projectsSummary={lifeProjectsSummary()}
                   retirementSummary={{
                     rendaMensalDesejada: getClientData().aposentadoria.rendaMensalDesejada,

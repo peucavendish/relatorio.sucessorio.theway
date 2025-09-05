@@ -150,39 +150,36 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl">Situação Financeira Atual</CardTitle>
+              <CardTitle className="card-title-standard text-lg">Situação Financeira Atual</CardTitle>
               <CardDescription>
                 Análise do seu patrimônio e fluxo financeiro
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-3 gap-6">
-            <div className="flex flex-col items-center">
-                <div className="text-sm text-muted-foreground mb-1">Investimentos Financeiros Atuais</div>
-                <div className="text-2xl font-semibold">
-                  {formatCurrency(
-                    (data?.totalInvestido ??
-                      (data?.ativos
-                        ?.filter(asset => asset.tipo === 'Investimentos')
-                        .reduce((sum, asset) => sum + asset.valor, 0))) || 0
-                  )}
+            <CardContent>
+              <div className="card-grid-3">
+                <div className="card-metric">
+                  <h3 className="card-metric-label">Investimentos Financeiros Atuais</h3>
+                  <div className="card-metric-value">
+                    {formatCurrency(
+                      (data?.totalInvestido ??
+                        (data?.ativos
+                          ?.filter(asset => asset.tipo === 'Investimentos')
+                          .reduce((sum, asset) => sum + asset.valor, 0))) || 0
+                    )}
+                  </div>
                 </div>
-                {/* indicador removido */}
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="text-sm text-muted-foreground mb-1">Excedente Mensal</div>
-                <div className="text-2xl font-semibold">
-                  {formatCurrency(data?.excedenteMensal || 0)}
+                <div className="card-metric">
+                  <h3 className="card-metric-label">Excedente Mensal</h3>
+                  <div className="card-metric-value">
+                    {formatCurrency(data?.excedenteMensal || 0)}
+                  </div>
                 </div>
-                {/* indicador removido */}
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="text-sm text-muted-foreground mb-1">Patrimônio Líquido</div>
-                <div className="text-2xl font-semibold">
-                  {formatCurrency(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0))}
+                <div className="card-metric">
+                  <h3 className="card-metric-label">Patrimônio Líquido</h3>
+                  <div className="card-metric-value">
+                    {formatCurrency(data.ativos.reduce((sum, asset) => sum + asset.valor, 0) - data.passivos.reduce((sum, liability) => sum + liability.valor, 0))}
+                  </div>
                 </div>
-                {/* indicador removido */}
               </div>
 
         
@@ -203,7 +200,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl">Objetivo de Aposentadoria</CardTitle>
+              <CardTitle className="card-title-standard text-lg">Objetivo de Aposentadoria</CardTitle>
               <CardDescription>
                 Baseado nas suas preferências e estilo de vida
               </CardDescription>
@@ -277,7 +274,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
             hideControls={hideControls}
           >
             <CardHeader>
-              <CardTitle className="text-xl">Projeção Financeira</CardTitle>
+              <CardTitle className="card-title-standard text-lg">Projeção Financeira</CardTitle>
               <CardDescription>
                 Análise da evolução do seu patrimônio ao longo do tempo
               </CardDescription>
