@@ -159,7 +159,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 {/* KPIs anuais removidos (já exibidos no quadro superior) */}
                 {/* Gráfico mensal: Renda, Despesas e Excedente (layout aprimorado) */}
                 <div className="w-full">
-                  <div className="h-80">
+                  <div className="h-[300px] sm:h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={monthlyChartData} margin={{ top: 24, right: 24, left: 8, bottom: 8 }} barCategoryGap={24} barGap={12}>
                         <XAxis 

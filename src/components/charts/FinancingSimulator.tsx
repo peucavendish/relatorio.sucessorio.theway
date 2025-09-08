@@ -429,7 +429,8 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
       <CardContent className="px-6">
         {/* Tabela de resultados */}
         <div className="border border-border rounded-md overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-muted/30">
               <tr>
                 <th className="py-2 px-3 text-left font-medium">Estratégia</th>
@@ -477,6 +478,7 @@ const FinancingSimulator: React.FC<FinancingSimulatorProps> = ({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
       

@@ -150,7 +150,12 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                 })
                 .reduce((acc: number, a: any) => acc + (Number(a?.valor) || 0), 0);
 
-              const vgblSaldo = Number(data?.tributario?.previdenciaVGBL?.saldoAtual || data?.tributario?.previdenciaVGBL?.saldo || 0);
+              const vgblSaldo = Number(
+                data?.tributario?.previdenciaVGBL?.saldoAtual ||
+                data?.tributario?.previdenciaVGBL?.saldo ||
+                data?.tributario?.previdenciaVGBL?.valorAtual ||
+                0
+              );
               
               // Calculate total from previdencia_privada array (PGBL + VGBL)
               const previdenciaPrivadaSaldo = Array.isArray(data?.previdencia_privada) 
@@ -203,18 +208,19 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                     </div>
                   </div>
                   <div className="p-4 border rounded-lg">
+                    <div className="w-full">
                     <ChartContainer
                       config={{
                         Total: { label: 'Patrimônio total', color: '#36557C' },
                         Custo: { label: 'Custo de transmissão', color: '#E52B50' },
                         Transmissivel: { label: 'Patrimônio transmissível', color: '#21887C' },
                       }}
-                      className="h-80 w-full"
+                      className="w-full h-[240px] sm:h-[320px] md:h-80"
                     >
                       <ResponsiveContainer>
-                        <ReBarChart data={chartData}>
-                          <XAxis dataKey="name" />
-                          <YAxis tickFormatter={(v) => `R$ ${(v / 1_000_000).toFixed(1)}Mi`} />
+                        <ReBarChart data={chartData} margin={{ left: 6, right: 8, top: 8, bottom: 8 }}>
+                          <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                          <YAxis width={40} tick={{ fontSize: 10 }} tickFormatter={(v) => `R$ ${(v / 1_000_000).toFixed(1)}Mi`} />
                           <ChartTooltip content={<ChartTooltipContent />} />
                           <ChartLegend content={<ChartLegendContent />} />
                           <Bar dataKey="Total" fill="#36557C" />
@@ -223,6 +229,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                         </ReBarChart>
                       </ResponsiveContainer>
                     </ChartContainer>
+                    </div>
                   </div>
                 </div>
               );

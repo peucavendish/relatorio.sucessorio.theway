@@ -168,6 +168,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
             <CardContent className="space-y-6">
               <div>
                 <h4 className="font-medium mb-2">Rendimentos e Tributação</h4>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -188,6 +189,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
                 <div className="grid md:grid-cols-3 gap-4 mt-4">
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground mb-1">Renda Tributável (mês)</span>
@@ -321,7 +323,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
           </HideableCard>
         </div> }
 
-        {/* Recomendações Estratégicas }
+        
         <div
           ref={recomendacoesRef as React.RefObject<HTMLDivElement>}
           className="mb-8 animate-on-scroll delay-2"
@@ -386,7 +388,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
               </div>
             </CardContent>
           </HideableCard>
-        </div>*/}
+        </div>
 
       </div>
     </section>

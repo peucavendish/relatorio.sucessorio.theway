@@ -29,6 +29,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const assetColors: Record<string, string> = {
     'Imóveis': '#21887C',           // Verde
     'Investimentos': '#36557C',     // Azul
+    'Investimentos - Financeiros': '#36557C',     // Azul (residual financeiro)
     'Participação em empresa': '#21887C',  // Verde
     'Outros': '#21887C',            // Verde
     'Veículos': '#E52B50',          // Vermelho
@@ -47,13 +48,18 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
 
   const composition = data?.financas?.composicao_patrimonial || {};
 
-  // Não somar subgrupos (Curto Prazo, Previdência, Internacional) em Investimentos.
-  // Apenas excluir da exibição para evitar dupla contagem, mantendo Investimentos como informado no JSON.
+  // Lógica: Investimentos - Financeiros = Investimentos total - Previdência - Internacional
+  // Removemos subgrupos da exibição e inserimos o residual financeiro sob novo rótulo
+  const rawInvestimentos = Number((composition as any)['Investimentos'] || 0);
+  const rawPrevidencia = Number((composition as any)['Previdência'] || 0);
+  const rawInternacional = Number((composition as any)['Internacional'] || 0);
+  const investimentosFinanceirosResidual = Math.max(0, rawInvestimentos - rawPrevidencia - rawInternacional);
+
   const compositionAdjusted = { ...composition } as Record<string, number>;
-  compositionAdjusted['Investimentos'] = Number(compositionAdjusted['Investimentos'] || 0);
-  delete compositionAdjusted['Curto Prazo'];
-  delete compositionAdjusted['Previdência'];
-  delete compositionAdjusted['Internacional'];
+  delete (compositionAdjusted as any)['Curto Prazo'];
+  // Substitui "Investimentos" por "Investimentos - Financeiros" com o residual calculado
+  delete (compositionAdjusted as any)['Investimentos'];
+  (compositionAdjusted as any)['Investimentos - Financeiros'] = investimentosFinanceirosResidual;
 
   const totalComposition: number = Object.values(compositionAdjusted as Record<string, any>).reduce(
     (sum: number, value: any) => sum + (Number(value) || 0),
@@ -76,7 +82,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   // KPIs dinâmicos
   const totalAtivos: number = Number(totalComposition);
   const percentualImoveis: number = totalAtivos > 0 ? Math.round(((Number(composition?.['Imóveis']) || 0) / totalAtivos) * 100) : 0;
-  const percentualFinanceiroLiquido: number = totalAtivos > 0 ? Math.round(((Number(composition?.['Investimentos']) || 0) / totalAtivos) * 100) : 0;
+  const percentualFinanceiroLiquido: number = totalAtivos > 0 ? Math.round(((Number((compositionAdjusted as any)['Investimentos - Financeiros']) || 0) / totalAtivos) * 100) : 0;
   const diversificacao = compositionChartData.length;
   const maiorClasse = compositionChartData[0]?.name || '-';
   const maiorPercentual = compositionChartData[0]?.value || 0;
@@ -87,10 +93,26 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const totalPassivos: number = passivos.reduce((sum: number, p: any) => sum + (Number(p?.valor) || 0), 0);
   const patrimonioLiquido: number = totalAtivos - totalPassivos;
 
-  // Listas detalhadas de ativos para exibição (mostrar a lista completa do JSON)
+  // Lista de ativos para o Balanço: não detalhar subitens de investimentos
   const ativos = Array.isArray(data?.financas?.ativos) ? data.financas.ativos : [];
-  const ativosExibicao = ativos;
-  const totalAtivosLista: number = ativosExibicao.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
+  const isInvestmentSubitem = (asset: any): boolean => {
+    const tipo = String(asset?.tipo || '').toLowerCase();
+    const classe = String(asset?.classe || '').toLowerCase();
+    const descricao = String(asset?.descricao || '').toLowerCase();
+    const haystack = `${tipo} ${classe} ${descricao}`;
+    return (
+      haystack.includes('invest') ||
+      haystack.includes('internacional') ||
+      haystack.includes('previd') ||
+      haystack.includes('curto prazo')
+    );
+  };
+  const nonInvestmentAssets = ativos.filter((a: any) => !isInvestmentSubitem(a));
+  const ativosBalanco = [
+    ...(investimentosFinanceirosResidual > 0 ? [{ tipo: 'Investimentos - Financeiros', valor: investimentosFinanceirosResidual }] as any[] : []),
+    ...nonInvestmentAssets,
+  ];
+  const totalAtivosLista: number = ativosBalanco.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
   const endividamento: number = totalAtivos > 0 ? Number(((totalPassivos / totalAtivos) * 100).toFixed(2)) : 0;
   const rendaTotal: number = Array.isArray(data?.financas?.rendas)
     ? data.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
@@ -144,7 +166,8 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   // Denominador: valor total de "Investimentos" informado em composicao_patrimonial
   const totalInvestimentosComposicao: number = Number(data?.financas?.composicao_patrimonial?.['Investimentos'] || 0);
 
-  // Numerador (Exterior): ativos com tipo "Internacional" OU (tipo "Investimentos" e classe "Internacional")
+  // Numerador (Exterior): Preferir indicador explícito quando existir; senão, inferir pelos ativos
+  const valorExteriorIndicadores: number = Number(data?.indicadores?.investimento_internacional?.valor || 0);
   const exteriorInvestimentos = Array.isArray(data?.financas?.ativos)
     ? data.financas.ativos.filter((a: any) => {
         const tipo = String(a?.tipo || '').toLowerCase();
@@ -152,7 +175,8 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
         return tipo === 'internacional' || (tipo.includes('invest') && classe.includes('internacional'));
       })
     : [];
-  const valorExterior = exteriorInvestimentos.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
+  const valorExteriorInferido = exteriorInvestimentos.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
+  const valorExterior = valorExteriorIndicadores > 0 ? valorExteriorIndicadores : valorExteriorInferido;
   const valorBrasil = Math.max(0, totalInvestimentosComposicao - valorExterior);
   const pctExterior = totalInvestimentosComposicao > 0 ? Math.round((valorExterior / totalInvestimentosComposicao) * 100) : 0;
   const pctBrasil = totalInvestimentosComposicao > 0 ? 100 - pctExterior : 0;
@@ -164,11 +188,10 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
     { name: 'Exterior', value: pctExterior, color: '#B8860B', rawValue: formatCurrency(valorExterior), raw: valorExterior }
   ].filter(i => i.raw > 0);
 
-  const alertClass = deltaExteriorPct === 0
-    ? 'bg-[#21887C]/10 text-[#21887C]'
-    : (Math.abs(deltaExteriorPct) >= 5
-      ? 'bg-[#E52B50]/10 text-[#E52B50]'
-      : 'bg-[#E52B50]/10 text-[#E52B50]');
+  // Alerta: somente avisar quando abaixo da recomendação. Se estiver igual ou acima, considerar ok.
+  const alertClass = deltaExteriorPct > 0
+    ? 'bg-[#E52B50]/10 text-[#E52B50]'
+    : 'bg-[#21887C]/10 text-[#21887C]';
 
 
   return (
@@ -227,7 +250,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                   <div>
                     <h4 className="heading-3 mb-4">Ativos</h4>
                     <div className="card-list">
-                      {ativosExibicao.map((asset: any, index: number) => {
+                      {ativosBalanco.map((asset: any, index: number) => {
                         const valorExibido = Number(asset?.valor) || 0;
                         return (
                           <div key={index} className="card-list-item">
@@ -352,12 +375,10 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                   <div className="text-sm text-muted-foreground">
                   <div className={`p-2 rounded-md ${alertClass}`}>
                     {deltaExteriorPct > 0 ? (
-                        <span>Exposição ao exterior abaixo do recomendado em {Math.abs(deltaExteriorPct)} p.p.</span>
-                      ) : deltaExteriorPct < 0 ? (
-                      <span>Exposição ao exterior acima do recomendado em {Math.abs(deltaExteriorPct)} p.p.</span>
-                  ) : (
+                      <span>Exposição ao exterior abaixo do recomendado em {Math.abs(deltaExteriorPct)} p.p.</span>
+                    ) : (
                       <span>Exposição ao exterior alinhada à recomendação.</span>
-                  )}
+                    )}
                   </div>
                   </div>
 

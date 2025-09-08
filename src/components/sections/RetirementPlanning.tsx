@@ -29,6 +29,8 @@ interface RetirementData {
   taxaRetiradaSegura: number;
   taxaInflacao: number;
   taxaJurosReal: number;
+  rendas?: Array<{ fonte?: string; descricao?: string; valor: number; tributacao?: string; renda_passiva?: boolean }>; 
+  objetivos?: Array<{ tipo?: string; valor?: number; prazo?: string | number; prioridade?: any; nao_aposentadoria?: boolean }>;
 }
 
 interface RetirementPlanningProps {
@@ -209,7 +211,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
               {/* Registro fixo do objetivo informado (apresentação simplificada) */}
               <div className="p-3 rounded-md border border-border/70 bg-muted/20 text-sm">
                 <div className="font-medium">Objetivo registrado</div>
-                <div className="text-muted-foreground mt-0.5">Renda passiva pretendida: <span className="font-semibold">{formatCurrency(declaredGoal.rendaMensalPretendida)}</span></div>
+                <div className="text-muted-foreground mt-0.5">Renda na aposentadoria: <span className="font-semibold">{formatCurrency(declaredGoal.rendaMensalPretendida)}</span></div>
                 <div className="text-muted-foreground">Idade de aposentadoria: <span className="font-semibold">{declaredGoal.idadeAposentadoriaPretendida} anos</span></div>
               </div>
 
@@ -292,6 +294,74 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
                 scenarios={data?.cenarios || []}
                 onProjectionChange={setProjectionData}
                 hideControls={hideControls}
+                externalLiquidityEvents={(() => {
+                  const idadeAtual = Number(data?.idadeAtual) || 0;
+                  const aposentadoria = Number(data?.idadeAposentadoria) || 65;
+
+                  const passiveIncomeEvents = (Array.isArray(data?.rendas) ? data.rendas : [])
+                    .filter((r: any) => r && r.renda_passiva === true && Number(r.valor) > 0)
+                    .map((r: any, idx: number) => ({
+                      id: `derived-passive-${idx}`,
+                      name: `${r.descricao || r.fonte || 'Renda passiva'}`,
+                      value: Number(r.valor) || 0,
+                      isPositive: true,
+                      recurrence: 'monthly' as const,
+                      startAge: aposentadoria,
+                      endAge: null,
+                      enabled: true,
+                      isDerived: true
+                    }));
+
+                  const parsePrazoToAge = (prazo: any): number | null => {
+                    if (prazo == null) return null;
+                    if (typeof prazo === 'number' && isFinite(prazo)) {
+                      // Interpreta número puro como anos a partir da idade atual
+                      return Math.max(idadeAtual, idadeAtual + Math.max(0, Math.floor(prazo)));
+                    }
+                    const text = String(prazo).toLowerCase().trim();
+                    // "aos 65 anos" -> 65
+                    const aosMatch = text.match(/aos\s*(\d{1,3})\s*anos?/);
+                    if (aosMatch) {
+                      const age = parseInt(aosMatch[1], 10);
+                      return isFinite(age) ? age : null;
+                    }
+                    // "em 3 anos" ou "3 anos" -> idadeAtual + 3
+                    const anosMatch = text.match(/(\d{1,3})\s*anos?/);
+                    if (anosMatch) {
+                      const years = parseInt(anosMatch[1], 10);
+                      if (isFinite(years)) return Math.max(idadeAtual, idadeAtual + Math.max(0, years));
+                    }
+                    // "em 18 meses" -> arredonda para anos
+                    const mesesMatch = text.match(/(\d{1,3})\s*mes/);
+                    if (mesesMatch) {
+                      const months = parseInt(mesesMatch[1], 10);
+                      if (isFinite(months)) {
+                        const years = Math.max(1, Math.round(months / 12));
+                        return Math.max(idadeAtual, idadeAtual + years);
+                      }
+                    }
+                    return null;
+                  };
+
+                  const goalEvents = (Array.isArray(data?.objetivos) ? data.objetivos : [])
+                    .filter((o: any) => o && o.nao_aposentadoria === true && Number(o.valor) > 0)
+                    .map((o: any, idx: number) => {
+                      const start = parsePrazoToAge(o.prazo);
+                      return {
+                        id: `derived-goal-${idx}`,
+                        name: `${o.tipo || 'Objetivo'}`,
+                        value: Number(o.valor) || 0,
+                        isPositive: false,
+                        recurrence: 'once' as const,
+                        startAge: start ?? Math.max(idadeAtual + 1,  idadeAtual + 1),
+                        endAge: null,
+                        enabled: true,
+                        isDerived: true
+                      };
+                    });
+
+                  return [...passiveIncomeEvents, ...goalEvents];
+                })()}
               />
             </CardContent>
           </HideableCard>

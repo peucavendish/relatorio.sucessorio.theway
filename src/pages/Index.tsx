@@ -20,6 +20,7 @@ import { Loader2 } from 'lucide-react';
 import PrintExportButton from '@/components/ui/PrintExportButton';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
+import { formatCurrency } from '@/utils/formatCurrency';
 import SectionVisibilityControls from '@/components/layout/SectionVisibilityControls';
 import { useSectionVisibility } from '@/context/SectionVisibilityContext';
 import HideableSection from '@/components/ui/HideableSection';
@@ -71,6 +72,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       excedenteMensal: ((Array.isArray(userReports?.financas?.rendas)
         ? userReports.financas.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
         : 0) - userReports.financas.resumo.despesas_mensais) || 0,
+      rendas: userReports?.financas?.rendas || [],
       totalInvestido: userReports?.financas?.composicao_patrimonial?.Investimentos || 0,
       ativos: userReports?.financas?.ativos?.map(a => ({
         tipo: a.tipo,
@@ -108,6 +110,9 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       taxaRetiradaSegura: 0.04,
       taxaInflacao: 0.03,
       taxaJurosReal: 0.03
+      ,
+      // Inclui objetivos do cliente para derivar fluxos (ex.: compra de casa)
+      objetivos: userReports?.objetivos || []
     },
     objetivos: userReports?.objetivos || [],
     tributario: {
@@ -131,6 +136,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       recomendacoesAdicionais: userReports?.protecao?.recomendacoesAdicionais || {}
     },
     sucessao: userReports?.sucessao || {},
+    previdencia_privada: userReports?.previdencia_privada || [],
     planoAcao: {
       titulo: userReports?.planoAcao?.titulo || "Plano de Ação Financeira",
       resumo: userReports?.planoAcao?.resumo || "Plano de ação financeira",
@@ -150,7 +156,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       if (typeof item === 'string') return { titulo: item };
       return {
         titulo: item?.tipo || 'Objetivo',
-        descricao: `${item?.prazo || ''}${item?.prioridade ? ` | Prioridade ${item.prioridade}` : ''}`
+        descricao: `${(item?.valor != null && Number(item.valor) > 0) ? `${formatCurrency(Number(item.valor))} | ` : ''}${item?.prazo || ''}${item?.prioridade ? ` | Prioridade ${item.prioridade}` : ''}`
       };
     });
   };
