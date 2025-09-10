@@ -266,7 +266,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
         <SectionVisibilityProvider>
           <AutoHideSections userReports={userReports} />
           <div className="relative h-screen overflow-hidden">
-            <Header />
+            <Header showLogout={!!clientPropect} />
             <main className="h-[calc(100vh-64px)] overflow-y-auto">
               <div className="min-h-screen">
                 <CoverPage
@@ -357,7 +357,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
             </main>
             <DotNavigation clientMode={!!clientPropect} />
             <MobileDotNavigation clientMode={!!clientPropect} />
-            <FloatingActions userReports={userReports} />
+            {!clientPropect && <FloatingActions userReports={userReports} />}
             {!clientPropect && <SectionVisibilityControls />}
             {!clientPropect && <PrintExportButton />}
           </div>

@@ -1,33 +1,42 @@
 import React from 'react';
 import { useTheme } from '@/context/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Sun, Moon, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   title?: string;
   subtitle?: string;
+  showLogout?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
+const Header: React.FC<HeaderProps> = ({ title, subtitle, showLogout = false }) => {
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
 
   return (
     <header className="w-full py-3 animate-fade-in">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-4">
           {theme === 'light' ? (
-            <img 
-              src="/logo-light.png" 
-              alt="Logo" 
-              width={80} 
-              height={24} 
+            <img
+              src="/logo-light.png"
+              alt="Logo"
+              width={80}
+              height={24}
               className="h-6 w-auto object-contain"
             />
           ) : (
-            <img 
-              src="/logo-dark.png" 
-              alt="Logo" 
-              width={80} 
-              height={24} 
+            <img
+              src="/logo-dark.png"
+              alt="Logo"
+              width={80}
+              height={24}
               className="h-6 w-auto object-contain"
             />
           )}
@@ -38,13 +47,26 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
             </div>
           )}
         </div>
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          {showLogout && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut size={16} />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+          )}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </div>
       </div>
     </header>
   );
