@@ -10,10 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSectionNumbering } from '@/hooks/useSectionNumbering';
+import { reviewBoardService, SnapshotEntry, SnapshotMetrics, ReviewBoardData } from '@/services/reviewBoardService';
 
 interface ImplementationMonitoringProps {
   data: any;
   hideControls?: boolean;
+  sessionId?: string;
 }
 
 function toPercentage(value: number) {
@@ -25,26 +27,6 @@ function pow1p(baseRate: number, periods: number) {
   return Math.pow(1 + baseRate, periods);
 }
 
-interface SnapshotMetrics {
-  cdiAnnual: number;
-  ipcaAnnual: number;
-  cdiQuarter: number;
-  ipcaQuarter: number;
-  expectedQuarterContribution: number;
-  expectedQuarterReturn: number;
-  realizedQuarterContribution: number;
-  aporteCompliance: number;
-  expectedQuarterPatrimony: number;
-  realPatrimony: number;
-  patrimonioCompliance: number;
-}
-
-interface SnapshotEntry {
-  id: number;
-  dateIso: string;
-  dataUrl?: string;
-  metrics: SnapshotMetrics;
-}
 
 const SNAPSHOTS_KEY = 'implementationMonitoring.snapshots';
 
@@ -54,7 +36,7 @@ function getQuarterLabel(dateIso: string) {
   return `T${q}/${d.getFullYear()}`;
 }
 
-const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ data, hideControls }) => {
+const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ data, hideControls, sessionId }) => {
   const titleRef = useScrollAnimation<HTMLDivElement>();
   const sectionRef = useScrollAnimation<HTMLDivElement>({ threshold: 0.2 });
   const captureRef = React.useRef<HTMLDivElement>(null);
@@ -66,11 +48,11 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
 
   const currentInvestments: number = Number(
     data?.financas?.composicaoPatrimonial?.Investimentos ??
-      (Array.isArray(data?.financas?.ativos)
-        ? data.financas.ativos
-            .filter((a: any) => (a?.classe || a?.tipo || '').toLowerCase().includes('invest'))
-            .reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0)
-        : 0)
+    (Array.isArray(data?.financas?.ativos)
+      ? data.financas.ativos
+        .filter((a: any) => (a?.classe || a?.tipo || '').toLowerCase().includes('invest'))
+        .reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0)
+      : 0)
   ) || 0;
 
   const monthlySurplus: number = Number(data?.financas?.excedenteMensal) || 0;
@@ -93,50 +75,55 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
   const [hoverPreview, setHoverPreview] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    try {
-      const savedCdi = localStorage.getItem('implementationMonitoring.cdiAnnual');
-      const savedIpca = localStorage.getItem('implementationMonitoring.ipcaAnnual');
-      if (savedCdi !== null) {
-        const v = parseFloat(savedCdi);
-        if (Number.isFinite(v)) setCdiAnnual(v);
-      }
-      if (savedIpca !== null) {
-        const v = parseFloat(savedIpca);
-        if (Number.isFinite(v)) setIpcaAnnual(v);
+    const loadReviewBoardData = async () => {
+      if (!sessionId) {
+        // Fallback para localStorage se não houver sessionId
+        try {
+          const savedCdi = localStorage.getItem('implementationMonitoring.cdiAnnual');
+          const savedIpca = localStorage.getItem('implementationMonitoring.ipcaAnnual');
+          if (savedCdi !== null) {
+            const v = parseFloat(savedCdi);
+            if (Number.isFinite(v)) setCdiAnnual(v);
+          }
+          if (savedIpca !== null) {
+            const v = parseFloat(savedIpca);
+            if (Number.isFinite(v)) setIpcaAnnual(v);
+          }
+
+          const savedSnaps = localStorage.getItem(SNAPSHOTS_KEY);
+          if (savedSnaps) {
+            const parsed = JSON.parse(savedSnaps);
+            if (Array.isArray(parsed)) {
+              setSnapshots(parsed);
+            }
+          }
+        } catch { }
+        return;
       }
 
-      const savedSnaps = localStorage.getItem(SNAPSHOTS_KEY);
-      if (savedSnaps) {
-        const parsed = JSON.parse(savedSnaps);
-        if (Array.isArray(parsed)) {
-          const normalized: SnapshotEntry[] = parsed.map((s: any) => {
-            if (s?.metrics) return s as SnapshotEntry;
-            // Backwards compatibility: enrich older entries with current metrics as best-effort
-            return {
-              id: s?.id || Date.now(),
-              dateIso: s?.dateIso || new Date().toISOString(),
-              dataUrl: s?.dataUrl,
-              metrics: {
-                cdiAnnual,
-                ipcaAnnual,
-                cdiQuarter: pow1p(cdiAnnual, 3 / 12) - 1,
-                ipcaQuarter: ipcaAnnual / 4,
-                expectedQuarterContribution,
-                expectedQuarterReturn: currentInvestments * (pow1p(cdiAnnual, 3 / 12) - 1),
-                realizedQuarterContribution,
-                aporteCompliance: expectedQuarterContribution > 0 ? Math.min(1, realizedQuarterContribution / expectedQuarterContribution) : 0,
-                expectedQuarterPatrimony: currentInvestments + (currentInvestments * (pow1p(cdiAnnual, 3 / 12) - 1)) + expectedQuarterContribution,
-                realPatrimony: currentInvestments,
-                patrimonioCompliance: (currentInvestments + (currentInvestments * (pow1p(cdiAnnual, 3 / 12) - 1)) + expectedQuarterContribution) > 0 ? Math.min(1, currentInvestments / (currentInvestments + (currentInvestments * (pow1p(cdiAnnual, 3 / 12) - 1)) + expectedQuarterContribution)) : 0
-              }
-            };
-          });
-          setSnapshots(normalized);
+      try {
+        // Carregar dados do banco de dados
+        const response = await reviewBoardService.loadReviewBoard(sessionId);
+        if (response.reviewBoard?.snapshots) {
+          setSnapshots(response.reviewBoard.snapshots);
         }
+      } catch (error) {
+        console.error('Erro ao carregar dados do review board:', error);
+        // Fallback para localStorage em caso de erro
+        try {
+          const savedSnaps = localStorage.getItem(SNAPSHOTS_KEY);
+          if (savedSnaps) {
+            const parsed = JSON.parse(savedSnaps);
+            if (Array.isArray(parsed)) {
+              setSnapshots(parsed);
+            }
+          }
+        } catch { }
       }
-    } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    };
+
+    loadReviewBoardData();
+  }, [sessionId]);
 
   const handleCapture = async () => {
     if (!captureRef.current) return;
@@ -176,11 +163,25 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
           patrimonioCompliance: patrComp
         }
       };
-      setSnapshots(prev => {
-        const updated = [entry, ...prev];
-        try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updated)); } catch {}
-        return updated;
-      });
+      const updatedSnapshots = [entry, ...snapshots];
+      setSnapshots(updatedSnapshots);
+
+      // Salvar no banco de dados se sessionId estiver disponível
+      if (sessionId) {
+        try {
+          const reviewBoardData: ReviewBoardData = {
+            snapshots: updatedSnapshots
+          };
+          await reviewBoardService.saveReviewBoard(sessionId, reviewBoardData);
+        } catch (error) {
+          console.error('Erro ao salvar no banco de dados:', error);
+          // Fallback para localStorage em caso de erro
+          try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
+        }
+      } else {
+        // Fallback para localStorage se não houver sessionId
+        try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
+      }
       setCaptured(true);
       setTimeout(() => setCaptured(false), 1800);
     } catch (e) {
@@ -190,12 +191,26 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
     }
   };
 
-  const handleDeleteSnapshot = (id: number) => {
-    setSnapshots(prev => {
-      const updated = prev.filter(s => s.id !== id);
-      try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updated)); } catch {}
-      return updated;
-    });
+  const handleDeleteSnapshot = async (id: number) => {
+    const updatedSnapshots = snapshots.filter(s => s.id !== id);
+    setSnapshots(updatedSnapshots);
+
+    // Salvar no banco de dados se sessionId estiver disponível
+    if (sessionId) {
+      try {
+        const reviewBoardData: ReviewBoardData = {
+          snapshots: updatedSnapshots
+        };
+        await reviewBoardService.saveReviewBoard(sessionId, reviewBoardData);
+      } catch (error) {
+        console.error('Erro ao salvar no banco de dados:', error);
+        // Fallback para localStorage em caso de erro
+        try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
+      }
+    } else {
+      // Fallback para localStorage se não houver sessionId
+      try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
+    }
   };
 
   // Derivados
@@ -237,97 +252,97 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
           <h3 className="heading-3 mb-3">KPIs do trimestre</h3>
           <div className="relative overflow-visible">
             <div ref={captureRef}>
-            <div className="mb-6">
-              <h3 className="heading-3 mb-2">Premissas Financeiras</h3>
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2"><Target className="h-4 w-4" /> Patrimônio Financeiro Atual</CardTitle>
-                  <CardDescription>Base para projeções e metas do trimestre</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-sm font-medium">Valor atual</div>
-                    <div className="text-base font-semibold">{formatCurrency(Math.round(currentInvestments))}</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground">Considera o total reportado em Investimentos.</div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="mb-6">
-              <h3 className="heading-3 mb-2">Premissas (Alta Vista)</h3>
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Premissas Alta Vista</CardTitle>
-                  <CardDescription>CDI/IPCA e rentabilidade esperada (100% do CDI)</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <div className="text-sm font-medium mb-2">CDI e IPCA</div>
-                      <div className="grid grid-cols-1 gap-3 mb-3">
-                        <div>
-                          <Label htmlFor="cdiAnnual" className="mb-1 block">CDI (12 meses) %</Label>
-                          <Input
-                            id="cdiAnnual"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={Number.isFinite(cdiAnnual) ? (cdiAnnual * 100).toFixed(2) : ''}
-                            readOnly
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="ipcaAnnual" className="mb-1 block">IPCA (12 meses) %</Label>
-                          <Input
-                            id="ipcaAnnual"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={Number.isFinite(ipcaAnnual) ? (ipcaAnnual * 100).toFixed(2) : ''}
-                            readOnly
-                            disabled
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between border-t pt-3 mt-1">
-                        <div className="text-sm text-muted-foreground">CDI (trimestre ≈)</div>
-                        <Badge variant="outline" className="text-foreground">{toPercentage(cdiQuarter)}</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">Usado para estimar a rentabilidade (100% do CDI). IPCA apenas como referência de inflação.</p>
+              <div className="mb-6">
+                <h3 className="heading-3 mb-2">Premissas Financeiras</h3>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2"><Target className="h-4 w-4" /> Patrimônio Financeiro Atual</CardTitle>
+                    <CardDescription>Base para projeções e metas do trimestre</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-sm font-medium">Valor atual</div>
+                      <div className="text-base font-semibold">{formatCurrency(Math.round(currentInvestments))}</div>
                     </div>
-
-                    <div>
+                    <div className="text-xs text-muted-foreground">Considera o total reportado em Investimentos.</div>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="mb-6">
+                <h3 className="heading-3 mb-2">Premissas (Alta Vista)</h3>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Premissas Alta Vista</CardTitle>
+                    <CardDescription>CDI/IPCA e rentabilidade esperada (100% do CDI)</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium flex items-center gap-2"><Percent className="h-4 w-4" /> Rentabilidade Esperada</div>
-                          <div className="text-base font-semibold">{formatCurrency(Math.round(expectedQuarterReturn))}</div>
+                        <div className="text-sm font-medium mb-2">CDI e IPCA</div>
+                        <div className="grid grid-cols-1 gap-3 mb-3">
+                          <div>
+                            <Label htmlFor="cdiAnnual" className="mb-1 block">CDI (12 meses) %</Label>
+                            <Input
+                              id="cdiAnnual"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={Number.isFinite(cdiAnnual) ? (cdiAnnual * 100).toFixed(2) : ''}
+                              readOnly
+                              disabled
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="ipcaAnnual" className="mb-1 block">IPCA (12 meses) %</Label>
+                            <Input
+                              id="ipcaAnnual"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={Number.isFinite(ipcaAnnual) ? (ipcaAnnual * 100).toFixed(2) : ''}
+                              readOnly
+                              disabled
+                            />
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">Base: 100% do CDI</div>
-                        <div className="text-xs text-muted-foreground">Equivale a {toPercentage(cdiQuarter)} no trimestre. IPCA trimestral de referência: {toPercentage(ipcaQuarter)}.</div>
-                        <div className="text-xs text-muted-foreground mt-1">Considera 100% do CDI sobre o patrimônio atual; não inclui resgates ou eventos extraordinários.</div>
+                        <div className="flex items-center justify-between border-t pt-3 mt-1">
+                          <div className="text-sm text-muted-foreground">CDI (trimestre ≈)</div>
+                          <Badge variant="outline" className="text-foreground">{toPercentage(cdiQuarter)}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">Usado para estimar a rentabilidade (100% do CDI). IPCA apenas como referência de inflação.</p>
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium flex items-center gap-2"><PiggyBank className="h-4 w-4" /> Aportes esperados (Trimestre)</div>
-                          <div className="text-base font-semibold">{formatCurrency(Math.round(expectedQuarterContribution))}</div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm font-medium flex items-center gap-2"><Percent className="h-4 w-4" /> Rentabilidade Esperada</div>
+                            <div className="text-base font-semibold">{formatCurrency(Math.round(expectedQuarterReturn))}</div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">Base: 100% do CDI</div>
+                          <div className="text-xs text-muted-foreground">Equivale a {toPercentage(cdiQuarter)} no trimestre. IPCA trimestral de referência: {toPercentage(ipcaQuarter)}.</div>
+                          <div className="text-xs text-muted-foreground mt-1">Considera 100% do CDI sobre o patrimônio atual; não inclui resgates ou eventos extraordinários.</div>
                         </div>
-                        <div className="text-xs text-muted-foreground">Meta trimestral baseada no aporte mensal esperado × 3.</div>
-                      </div>
 
-                      <div className="mt-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium flex items-center gap-2"><Target className="h-4 w-4" /> Patrimônio esperado (Trimestre)</div>
-                          <div className="text-base font-semibold">{formatCurrency(Math.round(expectedQuarterPatrimony))}</div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm font-medium flex items-center gap-2"><PiggyBank className="h-4 w-4" /> Aportes esperados (Trimestre)</div>
+                            <div className="text-base font-semibold">{formatCurrency(Math.round(expectedQuarterContribution))}</div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">Meta trimestral baseada no aporte mensal esperado × 3.</div>
                         </div>
-                        <div className="text-xs text-muted-foreground">Patrimônio atual + rentabilidade esperada + aportes esperados.</div>
+
+                        <div className="mt-6">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm font-medium flex items-center gap-2"><Target className="h-4 w-4" /> Patrimônio esperado (Trimestre)</div>
+                            <div className="text-base font-semibold">{formatCurrency(Math.round(expectedQuarterPatrimony))}</div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">Patrimônio atual + rentabilidade esperada + aportes esperados.</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardContent>
+                </Card>
+              </div>
 
             </div>
             {/* Bloco "Realizado" removido conforme solicitação */}
@@ -383,7 +398,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
                     </tr>
                     <tr>
                       <td className="sticky left-0 bg-background z-10 font-medium">CDI (trimestre)</td>
-                      {snapshots.map(s => <td key={s.id + '-cditrim'}>{toPercentage((s.metrics?.cdiQuarter) ?? (pow1p(cdiAnnual, 3/12) - 1))}</td>)}
+                      {snapshots.map(s => <td key={s.id + '-cditrim'}>{toPercentage((s.metrics?.cdiQuarter) ?? (pow1p(cdiAnnual, 3 / 12) - 1))}</td>)}
                     </tr>
                     <tr>
                       <td className="sticky left-0 bg-background z-10 font-medium">Rentabilidade esperada (trimestre)</td>
@@ -397,7 +412,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
                       <td className="sticky left-0 bg-background z-10 font-medium">Patrimônio esperado (trimestre)</td>
                       {snapshots.map(s => <td key={s.id + '-patesp'}>{formatCurrency(Math.round((s.metrics?.expectedQuarterPatrimony) ?? expectedQuarterPatrimony))}</td>)}
                     </tr>
-                    
+
                   </tbody>
                 </table>
               </div>

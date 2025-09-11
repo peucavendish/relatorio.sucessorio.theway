@@ -348,7 +348,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
                     <ActionPlan data={getClientData()} hideControls={clientPropect} sessionId={sessionId} />
                   </HideableSection>
                   <HideableSection sectionId="implementation-monitoring" hideControls={clientPropect}>
-                    <ImplementationMonitoring data={getClientData()} hideControls={clientPropect} />
+                    <ImplementationMonitoring data={getClientData()} hideControls={clientPropect} sessionId={sessionId} />
                   </HideableSection>
                 </>
               )}
