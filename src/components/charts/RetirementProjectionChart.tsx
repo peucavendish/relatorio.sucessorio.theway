@@ -847,6 +847,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
   });
   const [overrideAporte, setOverrideAporte] = useState<number | null>(null);
   const [liquidityEvents, setLiquidityEvents] = useState<LiquidityEvent[]>([]);
+  const [removedDerivedIds, setRemovedDerivedIds] = useState<string[]>([]);
   const [newEventName, setNewEventName] = useState<string>('');
   const [newEventValue, setNewEventValue] = useState<number>(0);
   const [newEventType, setNewEventType] = useState<'positive' | 'negative'>('positive');
@@ -889,31 +890,68 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     loadLiquidityEvents();
   }, []);
 
+  // Persistir/remontar remoções de eventos derivados por sessão (localStorage)
+  useEffect(() => {
+    const sessionId = getSessionId();
+    if (!sessionId) return;
+    try {
+      const saved = localStorage.getItem(`removedDerivedLiquidity:${sessionId}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setRemovedDerivedIds(parsed);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const sessionId = getSessionId();
+    if (!sessionId) return;
+    try {
+      localStorage.setItem(`removedDerivedLiquidity:${sessionId}`, JSON.stringify(removedDerivedIds));
+    } catch {}
+  }, [removedDerivedIds]);
+
   // Inject/refresh derived passive-income events from externalLiquidityEvents prop, preserving user edits
   useEffect(() => {
     if (!externalLiquidityEvents) return;
     setLiquidityEvents(prev => {
       const prevMap = new Map((prev || []).map(ev => [ev.id, ev]));
-      const mergedDerived: LiquidityEvent[] = externalLiquidityEvents.map((e) => {
-        const existing = prevMap.get(e.id);
-        const recurrence = e.recurrence || 'annual';
-        const shouldAnchorToRetirement = (e as any).isDerived === true && recurrence !== 'once';
-        return {
-          id: e.id,
-          name: e.name,
-          value: Number(e.value) || 0,
-          isPositive: e.isPositive !== false,
-          recurrence,
-          startAge: shouldAnchorToRetirement ? idadeAposentadoria : (e.startAge ?? idadeAposentadoria),
-          endAge: e.endAge ?? null,
-          enabled: existing?.enabled ?? (e.enabled !== false),
-          isDerived: true
-        };
-      });
+      const blocked = new Set(removedDerivedIds);
       const nonDerived = (prev || []).filter(ev => !ev.isDerived);
+      const mergedDerived: LiquidityEvent[] = externalLiquidityEvents
+        .filter((e) => !blocked.has(e.id))
+        .filter((e) => {
+          const recurrence = e.recurrence || 'annual';
+          const shouldAnchorToRetirement = (e as any).isDerived === true && recurrence !== 'once';
+          const startAge = shouldAnchorToRetirement ? idadeAposentadoria : (e.startAge ?? idadeAposentadoria);
+          // Evita duplicar se já existe um evento de usuário equivalente
+          return !nonDerived.some(nd => (
+            nd.name === e.name &&
+            (nd.startAge ?? nd.age) === startAge &&
+            Math.abs((nd.value ?? 0) - Number(e.value || 0)) < 1e-6 &&
+            (nd.recurrence || 'annual') === recurrence &&
+            nd.isPositive !== false === (e.isPositive !== false)
+          ));
+        })
+        .map((e) => {
+          const existing = prevMap.get(e.id);
+          const recurrence = e.recurrence || 'annual';
+          const shouldAnchorToRetirement = (e as any).isDerived === true && recurrence !== 'once';
+          return {
+            id: e.id,
+            name: e.name,
+            value: Number(e.value) || 0,
+            isPositive: e.isPositive !== false,
+            recurrence,
+            startAge: shouldAnchorToRetirement ? idadeAposentadoria : (e.startAge ?? idadeAposentadoria),
+            endAge: e.endAge ?? null,
+            enabled: existing?.enabled ?? (e.enabled !== false),
+            isDerived: true
+          };
+        });
       return [...mergedDerived, ...nonDerived];
     });
-  }, [externalLiquidityEvents, idadeAposentadoria]);
+  }, [externalLiquidityEvents, idadeAposentadoria, removedDerivedIds]);
 
   // Recalcular projeção sempre que inputs mudarem
   useEffect(() => {
@@ -1039,6 +1077,10 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
   };
 
   const handleRemoveLiquidityEvent = async (id: string) => {
+    const target = liquidityEvents.find(e => e.id === id);
+    if (target?.isDerived) {
+      setRemovedDerivedIds(prev => prev.includes(id) ? prev : [...prev, id]);
+    }
     const updatedEvents = liquidityEvents.filter(event => event.id !== id);
     setLiquidityEvents(updatedEvents);
 
@@ -1092,6 +1134,11 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     if (!editName || startAge < currentAge || editValue <= 0) return;
     if (endAge !== undefined && endAge < startAge) return;
 
+    const original = liquidityEvents.find(e => e.id === editingEventId);
+    if (original?.isDerived) {
+      setRemovedDerivedIds(prev => prev.includes(original.id) ? prev : [...prev, original.id]);
+    }
+
     const updatedEvents = liquidityEvents.map(ev => {
       if (ev.id !== editingEventId) return ev;
       return {
@@ -1101,7 +1148,8 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
         isPositive: editType === 'positive',
         recurrence: editRecurrence,
         startAge: startAge,
-        endAge: endAge ?? null
+        endAge: endAge ?? null,
+        isDerived: false
       };
     });
 
@@ -1501,15 +1549,13 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
                               className="text-[#36557C] hover:text-[#2a4260]"
                               title="Editar"
                             >✎</button>
-                            {!event.isDerived && (
-                              <button
-                                onClick={() => handleRemoveLiquidityEvent(event.id)}
-                                className="text-[#E52B50] hover:text-[#c41e3a]"
-                                title="Remover evento"
-                              >
-                                ×
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleRemoveLiquidityEvent(event.id)}
+                              className="text-[#E52B50] hover:text-[#c41e3a]"
+                              title="Remover evento"
+                            >
+                              ×
+                            </button>
                           </>
                         </div>
                       </td>
