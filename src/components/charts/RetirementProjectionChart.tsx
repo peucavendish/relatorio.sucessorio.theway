@@ -218,14 +218,14 @@ const calculatePerpetuityContribution = (
   if (capitalTotalDisponivel >= capitalNecessarioPerpetuidade) return 0;
 
   // Calculamos o aporte mensal necessário para complementar
-  const aporteMensal = Math.abs(PMT(
+  const pmt = PMT(
     taxa_mensal_real,
     meses_acumulacao,
     -capitalDisponivelHoje,
     capitalNecessarioPerpetuidade - valorFuturoEventos
-  ));
+  );
 
-  return aporteMensal;
+  return Math.max(0, Math.abs(pmt));
 };
 
 // Função principal de cálculo alinhada com a planilha
@@ -255,7 +255,8 @@ const calculateRetirementProjection = (
       // Para perpetuidade, o capital necessário é: saque_mensal / taxa_mensal (consumo)
       baseCapitalNecessario = rendaTarget / taxa_mensal_real_consumo;
     } else {
-      const meses_consumo = (expectativa_de_vida - idade_para_aposentar) * 12;
+      const consumoEndAge = 99;
+      const meses_consumo = (consumoEndAge - idade_para_aposentar) * 12;
       // Fórmula idêntica à usada na planilha (célula C9 em Apos(2)) com taxa de consumo
       baseCapitalNecessario = (rendaTarget * (1 - Math.pow(1 + taxa_mensal_real_consumo, -meses_consumo)) / taxa_mensal_real_consumo);
     }
@@ -265,7 +266,7 @@ const calculateRetirementProjection = (
     if (effectiveEvents.length === 0) return baseCapitalNecessario;
 
     let pvEventosPosApos = 0;
-    const idadeMaxima = isPerpetuity ? 100 : expectativa_de_vida;
+    const idadeMaxima = isPerpetuity ? 100 : 99;
     effectiveEvents.forEach(evento => {
       const recurrence = evento.recurrence || 'once';
       const start = evento.startAge ?? evento.age ?? idade_atual;
@@ -338,13 +339,15 @@ const calculateRetirementProjection = (
     const meses_ac = meses;
     if (meses_ac <= 0) return 0;
     const capitalNecessarioTotal = capitalNecessarioPadrao;
-    const aporteMensal = Math.abs(PMT(
+    const capitalTotalDisponivelNaAposentadoria = capitalFuturoPadrao + valorFuturoEventosPadrao;
+    if (capitalTotalDisponivelNaAposentadoria >= capitalNecessarioTotal) return 0;
+    const pmt = PMT(
       taxa_mensal_real,
       meses_ac,
       -capitalDisponivelHoje,
       capitalNecessarioTotal - valorFuturoEventosPadrao
-    ));
-    return aporteMensal;
+    );
+    return Math.max(0, Math.abs(pmt));
   })();
 
   // Se estamos resolvendo a renda a partir de um aporte específico, calcular renda correspondente
@@ -474,7 +477,8 @@ const calculateRetirementProjection = (
     if (isPerpetuity) {
       return Math.max(0, (capitalNaAposentadoria + pvEventosPosApos) * taxa_mensal_real_consumo);
     } else {
-      const meses_consumo = (expectativa_de_vida - idade_para_aposentar) * 12;
+      const consumoEndAge = 99;
+      const meses_consumo = (consumoEndAge - idade_para_aposentar) * 12;
       if (meses_consumo <= 0) return 0;
       const coef = (1 - Math.pow(1 + taxa_mensal_real_consumo, -meses_consumo)) / taxa_mensal_real_consumo;
       return Math.max(0, (capitalNaAposentadoria + pvEventosPosApos) / coef);
@@ -530,14 +534,14 @@ const calculateRetirementProjection = (
     if (capitalTotalDisponivel >= capitalNecessarioTotal) return 0;
 
     // Calculamos o aporte mensal necessário para complementar
-    const aporteMensal = Math.abs(PMT(
+    const pmt = PMT(
       taxa_mensal_real,
       meses_acumulacao,
       -capitalDisponivelHoje,
       capitalNecessarioTotal - valorFuturoEventos
-    ));
+    );
 
-    return aporteMensal;
+    return Math.max(0, Math.abs(pmt));
   };
 
   let aporteMensal = aporteMensalCalculado;
@@ -688,7 +692,8 @@ const calculateRetirementProjection = (
         idade++;
       }
     } else {
-      const consumoEndAge = Math.min(expectativa_de_vida, 99);
+      // Cenário finito: simular sempre até 99 e zerar no último ano
+      const consumoEndAge = 99;
       let patrimonioEsgotado = false;
       while (idade <= consumoEndAge) {
         const capitalInicial = capital;
@@ -743,8 +748,8 @@ const calculateRetirementProjection = (
           }
         }
 
-        // Força zerar no último ano do consumo
-        if (idade === consumoEndAge && capitalFinal > 0) {
+        // Zerar no último ano do horizonte (99) apenas se houver necessidade de aporte
+        if (idade === consumoEndAge && capitalFinal > 0 && aporteMensal > 0) {
           saqueEfetivo = capital + rendimentoCapital;
           capitalFinal = 0;
         }
@@ -891,18 +896,17 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
       const prevMap = new Map((prev || []).map(ev => [ev.id, ev]));
       const mergedDerived: LiquidityEvent[] = externalLiquidityEvents.map((e) => {
         const existing = prevMap.get(e.id);
-        if (existing && existing.isDerived) {
-          return existing; // Preserve user edits on derived events
-        }
+        const recurrence = e.recurrence || 'annual';
+        const shouldAnchorToRetirement = (e as any).isDerived === true && recurrence !== 'once';
         return {
           id: e.id,
           name: e.name,
           value: Number(e.value) || 0,
           isPositive: e.isPositive !== false,
-          recurrence: e.recurrence || 'monthly',
-          startAge: e.startAge ?? idadeAposentadoria,
+          recurrence,
+          startAge: shouldAnchorToRetirement ? idadeAposentadoria : (e.startAge ?? idadeAposentadoria),
           endAge: e.endAge ?? null,
-          enabled: e.enabled !== false,
+          enabled: existing?.enabled ?? (e.enabled !== false),
           isDerived: true
         };
       });
