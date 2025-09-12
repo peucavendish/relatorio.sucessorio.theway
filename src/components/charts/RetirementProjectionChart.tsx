@@ -847,7 +847,6 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
   });
   const [overrideAporte, setOverrideAporte] = useState<number | null>(null);
   const [liquidityEvents, setLiquidityEvents] = useState<LiquidityEvent[]>([]);
-  const [removedDerivedIds, setRemovedDerivedIds] = useState<string[]>([]);
   const [newEventName, setNewEventName] = useState<string>('');
   const [newEventValue, setNewEventValue] = useState<number>(0);
   const [newEventType, setNewEventType] = useState<'positive' | 'negative'>('positive');
@@ -877,11 +876,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
           endAge: null,
           enabled: true
         }));
-        setLiquidityEvents(prev => {
-          // Preserve any existing derived events already injected
-          const derived = (prev || []).filter(e => e.isDerived);
-          return [...derived, ...events];
-        });
+        setLiquidityEvents(events);
       } catch (error) {
         console.error('Error loading liquidity events:', error);
       }
@@ -890,68 +885,7 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     loadLiquidityEvents();
   }, []);
 
-  // Persistir/remontar remoções de eventos derivados por sessão (localStorage)
-  useEffect(() => {
-    const sessionId = getSessionId();
-    if (!sessionId) return;
-    try {
-      const saved = localStorage.getItem(`removedDerivedLiquidity:${sessionId}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) setRemovedDerivedIds(parsed);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    const sessionId = getSessionId();
-    if (!sessionId) return;
-    try {
-      localStorage.setItem(`removedDerivedLiquidity:${sessionId}`, JSON.stringify(removedDerivedIds));
-    } catch {}
-  }, [removedDerivedIds]);
-
-  // Inject/refresh derived passive-income events from externalLiquidityEvents prop, preserving user edits
-  useEffect(() => {
-    if (!externalLiquidityEvents) return;
-    setLiquidityEvents(prev => {
-      const prevMap = new Map((prev || []).map(ev => [ev.id, ev]));
-      const blocked = new Set(removedDerivedIds);
-      const nonDerived = (prev || []).filter(ev => !ev.isDerived);
-      const mergedDerived: LiquidityEvent[] = externalLiquidityEvents
-        .filter((e) => !blocked.has(e.id))
-        .filter((e) => {
-          const recurrence = e.recurrence || 'annual';
-          const shouldAnchorToRetirement = (e as any).isDerived === true && recurrence !== 'once';
-          const startAge = shouldAnchorToRetirement ? idadeAposentadoria : (e.startAge ?? idadeAposentadoria);
-          // Evita duplicar se já existe um evento de usuário equivalente
-          return !nonDerived.some(nd => (
-            nd.name === e.name &&
-            (nd.startAge ?? nd.age) === startAge &&
-            Math.abs((nd.value ?? 0) - Number(e.value || 0)) < 1e-6 &&
-            (nd.recurrence || 'annual') === recurrence &&
-            nd.isPositive !== false === (e.isPositive !== false)
-          ));
-        })
-        .map((e) => {
-          const existing = prevMap.get(e.id);
-          const recurrence = e.recurrence || 'annual';
-          const shouldAnchorToRetirement = (e as any).isDerived === true && recurrence !== 'once';
-          return {
-            id: e.id,
-            name: e.name,
-            value: Number(e.value) || 0,
-            isPositive: e.isPositive !== false,
-            recurrence,
-            startAge: shouldAnchorToRetirement ? idadeAposentadoria : (e.startAge ?? idadeAposentadoria),
-            endAge: e.endAge ?? null,
-            enabled: existing?.enabled ?? (e.enabled !== false),
-            isDerived: true
-          };
-        });
-      return [...mergedDerived, ...nonDerived];
-    });
-  }, [externalLiquidityEvents, idadeAposentadoria, removedDerivedIds]);
+  // Removido: injeção automática de eventos derivados. Agora só sugerimos rendas para inclusão manual.
 
   // Recalcular projeção sempre que inputs mudarem
   useEffect(() => {
@@ -1076,11 +1010,35 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     await syncEventsToApi(updatedEvents);
   };
 
+  // Incluir sugestão de renda como evento manual
+  const addSuggestedIncome = async (sugg: {
+    id: string;
+    name: string;
+    value: number;
+    isPositive?: boolean;
+    recurrence?: 'once' | 'annual' | 'monthly';
+    startAge?: number;
+    endAge?: number | null;
+    enabled?: boolean;
+  }) => {
+    const recurrence = sugg.recurrence || 'monthly';
+    const startAge = (sugg.startAge ?? idadeAposentadoria);
+    const newEvent: LiquidityEvent = {
+      id: `manual-${Date.now()}`,
+      name: sugg.name,
+      value: Number(sugg.value) || 0,
+      isPositive: sugg.isPositive !== false,
+      recurrence,
+      startAge,
+      endAge: recurrence === 'once' ? null : (sugg.endAge ?? null),
+      enabled: true,
+    };
+    const updatedEvents = [...liquidityEvents, newEvent];
+    setLiquidityEvents(updatedEvents);
+    await syncEventsToApi(updatedEvents);
+  };
+
   const handleRemoveLiquidityEvent = async (id: string) => {
-    const target = liquidityEvents.find(e => e.id === id);
-    if (target?.isDerived) {
-      setRemovedDerivedIds(prev => prev.includes(id) ? prev : [...prev, id]);
-    }
     const updatedEvents = liquidityEvents.filter(event => event.id !== id);
     setLiquidityEvents(updatedEvents);
 
@@ -1133,11 +1091,6 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
     const endAge = editRecurrence === 'once' ? undefined : (editEndAge === '' ? undefined : Number(editEndAge));
     if (!editName || startAge < currentAge || editValue <= 0) return;
     if (endAge !== undefined && endAge < startAge) return;
-
-    const original = liquidityEvents.find(e => e.id === editingEventId);
-    if (original?.isDerived) {
-      setRemovedDerivedIds(prev => prev.includes(original.id) ? prev : [...prev, original.id]);
-    }
 
     const updatedEvents = liquidityEvents.map(ev => {
       if (ev.id !== editingEventId) return ev;
@@ -1431,6 +1384,48 @@ const RetirementProjectionChart: React.FC<RetirementProjectionChartProps> = ({
               Eventos que afetam seu patrimônio em momentos específicos
             </div>
           </div>
+
+          {/* Sugestões de rendas (inclusão manual) */}
+          {Array.isArray(externalLiquidityEvents) && externalLiquidityEvents.filter(e => (e.isPositive !== false)).length > 0 && (
+            <div className="border border-dashed border-border rounded-md p-3 mb-3 bg-muted/20">
+              <div className="text-xs text-muted-foreground mb-2">
+                Rendas sugeridas a incluir (manual):
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {externalLiquidityEvents
+                  .filter((s) => s && (s.isPositive !== false))
+                  .map((s) => {
+                    const recurrence = s.recurrence || 'monthly';
+                    const startAge = (s.startAge ?? idadeAposentadoria);
+                    const alreadyIncluded = (liquidityEvents || []).some((nd) => (
+                      nd.name === s.name &&
+                      (nd.startAge ?? nd.age) === startAge &&
+                      (nd.recurrence || 'once') === recurrence &&
+                      Math.abs((nd.value ?? 0) - Number(s.value || 0)) < 1e-6 &&
+                      nd.isPositive === (s.isPositive !== false)
+                    ));
+                    return (
+                      <div key={s.id} className="px-2 py-1 rounded-md border text-xs flex items-center gap-2"
+                        style={{ borderColor: '#21887C', color: '#21887C', backgroundColor: '#21887C20' }}
+                        title={`${s.name} • ${(recurrence === 'once') ? 'Única' : (recurrence === 'annual' ? 'Anual' : 'Mensal')}`}
+                      >
+                        <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: '#21887C' }}></span>
+                        <span>{s.name}</span>
+                        <span className="opacity-70">{startAge}+</span>
+                        <span className="font-medium">{formatCurrency(Number(s.value || 0))}</span>
+                        <button
+                          onClick={() => addSuggestedIncome(s)}
+                          disabled={alreadyIncluded}
+                          className={`ml-1 h-6 px-2 rounded ${alreadyIncluded ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-[#21887C] text-white'}`}
+                        >
+                          {alreadyIncluded ? 'Incluída' : 'Incluir'}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
 
           <div className="border border-border rounded-md overflow-hidden mb-6">
             <div className="overflow-x-auto">

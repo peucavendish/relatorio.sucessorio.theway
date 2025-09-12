@@ -358,6 +358,8 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
       { nome: 'Leandro Pestana', url: 'https://outlook.office.com/bookwithme/user/147b89e608ae4307a6b0eb87c6d2321a@univalores.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
       { nome: 'Camila Karayan', url: 'https://outlook.office.com/bookwithme/user/dfedba4c0971473d960dbdfc1d5cb0a0@univalores.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
       { nome: 'Rafael Carranca', url: 'https://outlook.office.com/bookwithme/user/0723caa76625477a81095a52db779685@univalores.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
+      { nome: 'Solange', url: 'https://outlook.office.com/bookwithme/user/5b68366c7af547d2a2d6812498694505@univalores.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
+      { nome: 'Paula', url: 'https://outlook.office.com/bookwithme/user/3a1a9eed4303429c95cdfd04588c46bd@univalores.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
     ],
   };
 

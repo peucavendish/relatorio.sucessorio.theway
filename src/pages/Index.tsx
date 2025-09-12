@@ -84,7 +84,10 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       })),
       passivos: userReports?.financas?.passivos || userReports?.passivos || [],
 
-      rendaMensalDesejada: userReports?.planoAposentadoria?.renda_desejada || 0,
+      rendaMensalDesejada:
+        (userReports?.planoAposentadoria?.renda_desejada != null && Number(userReports.planoAposentadoria.renda_desejada) > 0
+          ? Number(userReports.planoAposentadoria.renda_desejada)
+          : (Number(userReports?.financas?.resumo?.despesas_mensais) || 0)),
       idadeAposentadoria: userReports?.planoAposentadoria?.idade_aposentadoria || 0,
       patrimonioAlvo: userReports?.planoAposentadoria?.capital_necessario || 0,
 

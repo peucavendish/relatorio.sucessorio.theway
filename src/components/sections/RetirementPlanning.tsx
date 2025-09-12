@@ -300,69 +300,21 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
                   const idadeAtual = Number(data?.idadeAtual) || 0;
                   const aposentadoria = Number(data?.idadeAposentadoria) || 65;
 
-                  const passiveIncomeEvents = (Array.isArray(data?.rendas) ? data.rendas : [])
+                  // Somente sugestões de rendas passivas (para inclusão manual próxima ao gráfico)
+                  const passiveIncomeSuggestions = (Array.isArray(data?.rendas) ? data.rendas : [])
                     .filter((r: any) => r && r.renda_passiva === true && Number(r.valor) > 0)
                     .map((r: any, idx: number) => ({
-                      id: `derived-passive-${idx}`,
+                      id: `suggest-passive-${idx}`,
                       name: `${r.descricao || r.fonte || 'Renda passiva'}`,
                       value: Number(r.valor) || 0,
                       isPositive: true,
                       recurrence: 'monthly' as const,
                       startAge: aposentadoria,
                       endAge: null,
-                      enabled: true,
-                      isDerived: true
+                      enabled: true
                     }));
 
-                  const parsePrazoToAge = (prazo: any): number | null => {
-                    if (prazo == null) return null;
-                    if (typeof prazo === 'number' && isFinite(prazo)) {
-                      // Interpreta número puro como anos a partir da idade atual
-                      return Math.max(idadeAtual, idadeAtual + Math.max(0, Math.floor(prazo)));
-                    }
-                    const text = String(prazo).toLowerCase().trim();
-                    // "aos 65 anos" -> 65
-                    const aosMatch = text.match(/aos\s*(\d{1,3})\s*anos?/);
-                    if (aosMatch) {
-                      const age = parseInt(aosMatch[1], 10);
-                      return isFinite(age) ? age : null;
-                    }
-                    // "em 3 anos" ou "3 anos" -> idadeAtual + 3
-                    const anosMatch = text.match(/(\d{1,3})\s*anos?/);
-                    if (anosMatch) {
-                      const years = parseInt(anosMatch[1], 10);
-                      if (isFinite(years)) return Math.max(idadeAtual, idadeAtual + Math.max(0, years));
-                    }
-                    // "em 18 meses" -> arredonda para anos
-                    const mesesMatch = text.match(/(\d{1,3})\s*mes/);
-                    if (mesesMatch) {
-                      const months = parseInt(mesesMatch[1], 10);
-                      if (isFinite(months)) {
-                        const years = Math.max(1, Math.round(months / 12));
-                        return Math.max(idadeAtual, idadeAtual + years);
-                      }
-                    }
-                    return null;
-                  };
-
-                  const goalEvents = (Array.isArray(data?.objetivos) ? data.objetivos : [])
-                    .filter((o: any) => o && o.nao_aposentadoria === true && Number(o.valor) > 0)
-                    .map((o: any, idx: number) => {
-                      const start = parsePrazoToAge(o.prazo);
-                      return {
-                        id: `derived-goal-${idx}`,
-                        name: `${o.tipo || 'Objetivo'}`,
-                        value: Number(o.valor) || 0,
-                        isPositive: false,
-                        recurrence: 'once' as const,
-                        startAge: start ?? Math.max(idadeAtual + 1,  idadeAtual + 1),
-                        endAge: null,
-                        enabled: true,
-                        isDerived: true
-                      };
-                    });
-
-                  return [...passiveIncomeEvents, ...goalEvents];
+                  return passiveIncomeSuggestions;
                 })()}
               />
             </CardContent>

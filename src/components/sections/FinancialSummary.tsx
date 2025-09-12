@@ -204,10 +204,18 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                             <stop offset="0%" stopColor="#21887C"/>
                             <stop offset="100%" stopColor="#21887C"/>
                           </linearGradient>
+                          <linearGradient id="bar-surplus-negative" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#E52B50"/>
+                            <stop offset="100%" stopColor="#E52B50"/>
+                          </linearGradient>
                         </defs>
                         <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={72}>
                           {monthlyChartData.map((entry, index) => {
-                            const gradientId = entry.name === 'Renda' ? 'url(#bar-income)' : entry.name === 'Despesas' ? 'url(#bar-expense)' : 'url(#bar-surplus)';
+                            const gradientId = entry.name === 'Renda'
+                              ? 'url(#bar-income)'
+                              : entry.name === 'Despesas'
+                                ? 'url(#bar-expense)'
+                                : (entry.value < 0 ? 'url(#bar-surplus-negative)' : 'url(#bar-surplus)');
                             return (
                               <Cell key={`cell-${index}`} fill={gradientId} />
                             );
