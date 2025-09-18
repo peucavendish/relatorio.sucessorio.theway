@@ -132,11 +132,13 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
           <CardContent>
             {/* Bloco 1: Liquidez para Inventário */}
             {(() => {
-              const totalPatrimonio =
-                Number(data?.financas?.patrimonioLiquido) ||
-                Number(data?.sucessao?.situacaoAtual?.patrimonioTotal) ||
-                Number(data?.protecao?.analiseNecessidades?.patrimonioTotal) ||
-                0;
+              const fin = (data as any)?.financas || {};
+              const totalAtivosCalc = Object.values(((fin as any)?.composicaoPatrimonial || {}) as Record<string, any>)
+                .reduce((sum: number, v: any) => sum + (Number(v) || 0), 0);
+              const totalPassivosCalc = Array.isArray((fin as any)?.passivos)
+                ? (fin as any).passivos.reduce((sum: number, p: any) => sum + (Number(p?.valor) || 0), 0)
+                : 0;
+              const totalPatrimonio = Math.max(0, totalAtivosCalc - totalPassivosCalc);
 
               const ativos = Array.isArray(data?.financas?.ativos) ? data.financas.ativos : [];
               const normalize = (s: string) =>
@@ -182,8 +184,9 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                   <div className="flex flex-col gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
-                        <div className="text-sm text-muted-foreground">Total do Patrimônio</div>
-                        <div className="text-xl font-semibold">{formatCurrency(totalPatrimonio)}</div>
+                      <div className="text-sm text-muted-foreground">Patrimônio Líquido</div>
+                      <div className="text-xl font-semibold">{formatCurrency(totalPatrimonio)}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Ativos − Passivos (Gestão de Ativos)</div>
                       </div>
                       <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
                         <div className="text-sm text-muted-foreground">Previdência (fora do inventário)</div>

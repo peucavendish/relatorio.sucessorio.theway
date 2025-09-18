@@ -444,20 +444,20 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                     legendPosition="side"
                   />
                   <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
-                  <div className="text-xs text-muted-foreground">Exterior</div>
-                  <div className="text-lg font-semibold">{formatCurrency(valorExterior)}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10 text-center min-w-0">
+                  <div className="text-xs text-muted-foreground whitespace-normal break-words">Exterior</div>
+                  <div className="text-base sm:text-lg font-semibold">{formatCurrency(valorExterior)}</div>
                   <div className="text-sm text-muted-foreground">({pctExterior}%)</div>
                   </div>
-                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
-                  <div className="text-xs text-muted-foreground">Brasil</div>
-                  <div className="text-lg font-semibold">{formatCurrency(valorBrasil)}</div>
+                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10 text-center min-w-0">
+                  <div className="text-xs text-muted-foreground whitespace-normal break-words">Brasil</div>
+                  <div className="text-base sm:text-lg font-semibold">{formatCurrency(valorBrasil)}</div>
                   <div className="text-sm text-muted-foreground">({pctBrasil}%)</div>
                   </div>
-                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
-                  <div className="text-xs text-muted-foreground">Recomendação Exterior</div>
-                  <div className="text-lg font-semibold">18%</div>
+                  <div className="p-3 rounded-lg border border-border/50 bg-muted/10 text-center min-w-0">
+                  <div className="text-xs text-muted-foreground whitespace-normal break-words">Recomendação Exterior</div>
+                  <div className="text-base sm:text-lg font-semibold">18%</div>
                   </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
