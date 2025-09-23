@@ -19,7 +19,14 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { calculateIrpfComparison } from '@/utils/irpf';
+import {
+  calculateIrpfComparison,
+  EDUCATION_CAP_PER_PERSON_ANNUAL,
+  DEPENDENT_DEDUCTION_ANNUAL,
+  PGBL_LIMIT_RATE,
+  SIMPLIFIED_DISCOUNT_CAP,
+  SIMPLIFIED_DISCOUNT_RATE,
+} from '@/utils/irpf';
 import { Input } from '@/components/ui/input';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Card as UiCard } from '@/components/ui/card';
@@ -123,6 +130,23 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
   }), [rendaTributavelAnual, numDependentes, gastoEducacao, gastoSaude, pgblAnual]);
 
   const modeloIR = irpf?.recommendedModel || tributario?.resumo?.modeloIR || '(Calculado abaixo)';
+  const recommendedTaxDue = irpf.recommendedModel === 'Completo'
+    ? irpf.complete.taxDue
+    : irpf.recommendedModel === 'Simplificado'
+    ? irpf.simplified.taxDue
+    : Math.min(irpf.complete.taxDue, irpf.simplified.taxDue);
+  const alternativeTaxDue = irpf.recommendedModel === 'Completo'
+    ? irpf.simplified.taxDue
+    : irpf.recommendedModel === 'Simplificado'
+    ? irpf.complete.taxDue
+    : Math.max(irpf.complete.taxDue, irpf.simplified.taxDue);
+  const estimatedSavings = Math.max(0, alternativeTaxDue - recommendedTaxDue);
+  const estimatedSavingsPct = rendaTributavelAnual > 0 ? estimatedSavings / rendaTributavelAnual : 0;
+  const alternativeModelName = irpf.recommendedModel === 'Completo'
+    ? 'Simplificado'
+    : irpf.recommendedModel === 'Simplificado'
+    ? 'Completo'
+    : (irpf.complete.taxDue <= irpf.simplified.taxDue ? 'Simplificado' : 'Completo');
 
   return (
     <section className="min-h-screen py-16 px-4" id="tax">
@@ -255,7 +279,7 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-4 gap-4">
+              <div className="grid md:grid-cols-5 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">Renda Tributável (ano)</div>
                   <div className="font-medium">{formatCurrency(rendaTributavelAnual)}</div>
@@ -275,44 +299,126 @@ const TaxPlanning: React.FC<TaxPlanningProps> = ({ data, hideControls }) => {
                   <CurrencyInput value={gastoSaude}
                     onChange={(v) => setGastoSaude(v)} />
                 </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">Contribuições PGBL (ano)</label>
+                  <CurrencyInput 
+                    value={pgblAnual}
+                    onChange={(v) => setPgblAnual(Math.min(v, rendaTributavelAnual * PGBL_LIMIT_RATE))}
+                    max={rendaTributavelAnual * PGBL_LIMIT_RATE}
+                  />
+                  <div className="text-xs text-muted-foreground mt-1">Limite: {formatCurrency(rendaTributavelAnual * PGBL_LIMIT_RATE)}</div>
+                </div>
               </div>
 
-              <div className="grid md:grid-cols-4 gap-4">
-                <div className="md:col-span-2 bg-muted/50 p-4 rounded-lg border border-border/50">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
                   <div className="text-sm text-muted-foreground mb-1">Contribuições PGBL (ano)</div>
                   <div className="font-medium">{formatCurrency(pgblAnual)}</div>
+                  <div className="text-xs text-muted-foreground mt-1">Limite: {formatCurrency(rendaTributavelAnual * PGBL_LIMIT_RATE)} (12% da renda)</div>
                 </div>
                 <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
                   <div className="text-sm text-muted-foreground mb-1">Modelo recomendável</div>
                   <div className="font-medium">{irpf.recommendedModel}</div>
                 </div>
-                <div className="bg-muted/50 p-4 rounded-lg border border-border/50">
-                  <div className="text-sm text-muted-foreground mb-1">Alíquota efetiva (recomendado)</div>
-                  <div className="font-medium">{(irpf.recommendedModel === 'Completo' ? irpf.complete.effectiveRate : irpf.recommendedModel === 'Simplificado' ? irpf.simplified.effectiveRate : Math.min(irpf.complete.effectiveRate, irpf.simplified.effectiveRate)).toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 })}</div>
+                <div className={`p-4 rounded-lg border ${estimatedSavings > 0 ? 'bg-green-50 border-green-200' : 'bg-muted/50 border-border/50'}`}>
+                  <div className="text-sm text-muted-foreground mb-1">Economia estimada</div>
+                  <div className="font-medium">{formatCurrency(estimatedSavings)}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{`Comparando ${irpf.recommendedModel} vs ${alternativeModelName}`}</div>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <UiCard className="p-4">
                   <div className="text-sm text-muted-foreground mb-2">Modelo Completo</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>Base de Cálculo</div>
-                    <div className="text-right font-medium">{formatCurrency(irpf.complete.taxableBase)}</div>
-                    <div>Imposto Devido</div>
-                    <div className="text-right font-medium">{formatCurrency(irpf.complete.taxDue)}</div>
-                    <div>Alíquota Efetiva</div>
-                    <div className="text-right font-medium">{irpf.complete.effectiveRate.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 })}</div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>Base Tributável (ano)</div>
+                      <div className="text-right font-medium">{formatCurrency(irpf.complete.annualTaxableIncome)}</div>
+                    </div>
+                    <div className="border-l border-border/60 pl-3 space-y-2">
+                      {irpf.complete.deductions.pgbl > 0 && (
+                        <div className="text-muted-foreground">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm">− PGBL</div>
+                            <div className="text-right">{formatCurrency(irpf.complete.deductions.pgbl)}</div>
+                          </div>
+                          <div className="text-xs mt-0.5">{`limite ${Math.round(PGBL_LIMIT_RATE * 100)}% da renda • ${formatCurrency(rendaTributavelAnual * PGBL_LIMIT_RATE)}`}</div>
+                        </div>
+                      )}
+                      {irpf.complete.deductions.dependents > 0 && (
+                        <div className="text-muted-foreground">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm">− Dependentes</div>
+                            <div className="text-right">{formatCurrency(irpf.complete.deductions.dependents)}</div>
+                          </div>
+                          <div className="text-xs mt-0.5">{`${formatCurrency(DEPENDENT_DEDUCTION_ANNUAL)} x ${numDependentes} dependente(s)`}</div>
+                        </div>
+                      )}
+                      {irpf.complete.deductions.education > 0 && (
+                        <div className="text-muted-foreground">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm">− Educação</div>
+                            <div className="text-right">{formatCurrency(irpf.complete.deductions.education)}</div>
+                          </div>
+                          <div className="text-xs mt-0.5">{`limite ${formatCurrency(EDUCATION_CAP_PER_PERSON_ANNUAL)} x ${numDependentes + 1} pessoa(s)`}</div>
+                        </div>
+                      )}
+                      {irpf.complete.deductions.health > 0 && (
+                        <div className="text-muted-foreground">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm">− Saúde</div>
+                            <div className="text-right">{formatCurrency(irpf.complete.deductions.health)}</div>
+                          </div>
+                          <div className="text-xs mt-0.5">despesa médica dedutível sem teto legal</div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="border-t border-border/60 my-2"></div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium">= Base de Cálculo</div>
+                      <div className="text-right font-semibold">{formatCurrency(irpf.complete.taxableBase)}</div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>Imposto Devido</div>
+                      <div className="text-right font-medium">{formatCurrency(irpf.complete.taxDue)}</div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>Alíquota Efetiva</div>
+                      <div className="text-right font-medium">{irpf.complete.effectiveRate.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 })}</div>
+                    </div>
                   </div>
                 </UiCard>
                 <UiCard className="p-4">
                   <div className="text-sm text-muted-foreground mb-2">Modelo Simplificado</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>Base de Cálculo</div>
-                    <div className="text-right font-medium">{formatCurrency(irpf.simplified.taxableBase)}</div>
-                    <div>Imposto Devido</div>
-                    <div className="text-right font-medium">{formatCurrency(irpf.simplified.taxDue)}</div>
-                    <div>Alíquota Efetiva</div>
-                    <div className="text-right font-medium">{irpf.simplified.effectiveRate.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 })}</div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>Base Tributável (ano)</div>
+                      <div className="text-right font-medium">{formatCurrency(irpf.simplified.annualTaxableIncome)}</div>
+                    </div>
+                    <div className="border-l border-border/60 pl-3 space-y-2">
+                      {irpf.simplified.deductions.simplifiedDiscount > 0 && (
+                        <div className="text-muted-foreground">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm">− Desconto Simplificado</div>
+                            <div className="text-right">{formatCurrency(irpf.simplified.deductions.simplifiedDiscount)}</div>
+                          </div>
+                          <div className="text-xs mt-0.5">{`${Math.round(SIMPLIFIED_DISCOUNT_RATE * 100)}% limitado a ${formatCurrency(SIMPLIFIED_DISCOUNT_CAP)}`}</div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="border-t border-border/60 my-2"></div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium">= Base de Cálculo</div>
+                      <div className="text-right font-semibold">{formatCurrency(irpf.simplified.taxableBase)}</div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>Imposto Devido</div>
+                      <div className="text-right font-medium">{formatCurrency(irpf.simplified.taxDue)}</div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>Alíquota Efetiva</div>
+                      <div className="text-right font-medium">{irpf.simplified.effectiveRate.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 2 })}</div>
+                    </div>
                   </div>
                 </UiCard>
               </div>

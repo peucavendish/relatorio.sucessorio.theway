@@ -7,9 +7,16 @@ export interface IrpfParams {
 }
 
 export interface IrpfResultItem {
+  // Renda tributável anual antes de deduções/descontos
+  annualTaxableIncome: number;
+  // Base de cálculo após deduções/descontos do modelo
   taxableBase: number;
   taxDue: number;
   effectiveRate: number; // taxDue / annualTaxableIncome
+  // Quebra das deduções consideradas no cálculo do modelo.
+  // Para o completo: { pgbl, dependents, education, health, total }
+  // Para o simplificado: { simplifiedDiscount, total }
+  deductions: Record<string, number>;
 }
 
 export interface IrpfComparisonResult {
@@ -95,14 +102,27 @@ export function calculateIrpfComparison(params: IrpfParams): IrpfComparisonResul
 
   return {
     complete: {
+      annualTaxableIncome,
       taxableBase: baseComplete,
       taxDue: taxComplete,
       effectiveRate: annualTaxableIncome > 0 ? taxComplete / annualTaxableIncome : 0,
+      deductions: {
+        pgbl: pgblDeduction,
+        dependents: dependentsDeduction,
+        education: educationDeduction,
+        health,
+        total: totalDeductionsComplete,
+      },
     },
     simplified: {
+      annualTaxableIncome,
       taxableBase: baseSimplified,
       taxDue: taxSimplified,
       effectiveRate: annualTaxableIncome > 0 ? taxSimplified / annualTaxableIncome : 0,
+      deductions: {
+        simplifiedDiscount,
+        total: simplifiedDiscount,
+      },
     },
     recommendedModel,
   };

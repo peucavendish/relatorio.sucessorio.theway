@@ -350,6 +350,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
 
   const consultoresPorCard: Record<string, { nome: string; url: string }[]> = {
     'protecao-patrimonial': [
+      { nome: 'Daniel Aveiro', url: 'https://outlook.office.com/bookwithme/user/dcebad87cf1b43288c9e24325993f59f@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
       { nome: 'Fabio Hassui', url: 'https://outlook.office.com/bookwithme/user/8df7cb6119d74390839118e19d34856d@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
       { nome: 'Alexandre Faustino', url: 'https://outlook.office.com/bookwithme/user/02a9df5432ab4311b99093de6fff649e@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
       { nome: 'Moisés Santos', url: 'https://outlook.office.com/bookwithme/user/95c185bee335439fac4dcb435f947edd@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=plink' },
