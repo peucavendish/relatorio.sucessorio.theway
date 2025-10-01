@@ -8,7 +8,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { formatCurrency, formatCurrencyCompact } from '@/utils/formatCurrency';
 import { useCardVisibility } from '@/context/CardVisibilityContext';
 import { Card } from '@/components/ui/card';
-import { useSectionNumbering } from '@/hooks/useSectionNumbering';
+
 
 interface FinanceSummary {
   patrimonioLiquido: number;
@@ -31,9 +31,8 @@ interface FinancialSummaryProps {
 const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls }) => {
   const headerRef = useScrollAnimation();
   const summaryCardRef = useScrollAnimation();
-  const incomeExpenseCardRef = useScrollAnimation();
   const balanceCardRef = useScrollAnimation();
-  const sectionNumber = useSectionNumbering('summary');
+
 
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
 
@@ -103,7 +102,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 <DollarSign size={28} className="text-financial-info" />
               </div>
             </div>
-            <h2 className="heading-2 mb-3">{sectionNumber}. Resumo Financeiro</h2>
+            <h2 className="heading-2 mb-3">Resumo Financeiro</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Visão geral da sua situação financeira atual, incluindo patrimônio,
               renda, gastos e composição patrimonial.
@@ -111,7 +110,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
           </div>
         </div>
 
-        {/* Financial Overview */}
+        {/* Financial Overview (consolidado com gráfico e detalhes) */}
         <div
           ref={summaryCardRef as React.RefObject<HTMLDivElement>}
           className="mb-10 animate-on-scroll"
@@ -141,173 +140,163 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 <div className="card-metric-subtitle">{formatCurrency(surplusMonthly)} / mês</div>
               </div>
             </div>
-          </HideableCard>
-        </div>
-
-        {/* Income & Expenses */}
-        <div
-          ref={incomeExpenseCardRef as React.RefObject<HTMLDivElement>}
-          className="mb-10 animate-on-scroll delay-1"
-        >
-          <div className="grid md:grid-cols-1 gap-6">
-            <HideableCard
-              id="renda-despesas"
-              isVisible={isCardVisible("renda-despesas")}
-              onToggleVisibility={() => toggleCardVisibility("renda-despesas")}
-              hideControls={hideControls}
-            >
-              <div className="md:p-8">
-                <h3 className="card-title-standard text-lg">Renda vs. Despesas</h3>
-                {/* KPIs anuais removidos (já exibidos no quadro superior) */}
-                {/* Gráfico mensal: Renda, Despesas e Excedente (layout aprimorado) */}
-                <div className="w-full">
-                  <div className="h-[300px] sm:h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={monthlyChartData} margin={{ top: 24, right: 24, left: 8, bottom: 8 }} barCategoryGap={24} barGap={12}>
-                        <XAxis 
-                          dataKey="name" 
-                          interval={0} 
-                          tickLine={false} 
-                          axisLine={false} 
-                          tickMargin={10}
-                          tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                        />
-                        <YAxis 
-                          domain={[0, (dataMax: number) => Math.max(dataMax || 0, 1) * 1.25]} 
-                          tickFormatter={(v) => formatCurrencyCompact(Number(v))} 
-                          tickLine={false} 
-                          axisLine={false} 
-                          width={72}
-                          tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                        />
-                        <CartesianGrid 
-                          strokeDasharray="4 4" 
-                          strokeOpacity={0.25}
-                          stroke="hsl(var(--foreground))"
-                        />
-                        <Tooltip
-                          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
-                          formatter={(value: any, _name: any, payload: any) => {
-                            return [`${formatCurrency(Number(value))} / mês`, payload?.payload?.name || ''];
-                          }}
-                        />
-                        <defs>
-                          <linearGradient id="bar-income" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#36557C"/>
-                            <stop offset="100%" stopColor="#36557C"/>
-                          </linearGradient>
-                          <linearGradient id="bar-expense" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#E52B50"/>
-                            <stop offset="100%" stopColor="#E52B50"/>
-                          </linearGradient>
-                          <linearGradient id="bar-surplus" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#21887C"/>
-                            <stop offset="100%" stopColor="#21887C"/>
-                          </linearGradient>
-                          <linearGradient id="bar-surplus-negative" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#E52B50"/>
-                            <stop offset="100%" stopColor="#E52B50"/>
-                          </linearGradient>
-                        </defs>
-                        <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={72}>
-                          {monthlyChartData.map((entry, index) => {
-                            const gradientId = entry.name === 'Renda'
-                              ? 'url(#bar-income)'
-                              : entry.name === 'Despesas'
-                                ? 'url(#bar-expense)'
-                                : (entry.value < 0 ? 'url(#bar-surplus-negative)' : 'url(#bar-surplus)');
-                            return (
-                              <Cell key={`cell-${index}`} fill={gradientId} />
-                            );
-                          })}
-                          <LabelList content={(labelProps: any) => {
-                            const { x, y, width, payload } = labelProps || {} as any;
-                            if (x == null || y == null) return null;
-                            const cx = (x as number) + ((width as number) || 0) / 2;
-                            const top = (y as number) - 10;
-                            const monthlyText = payload?.formatted ?? '';
-                            return (
-                              <text x={cx} y={top} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={12} fontWeight={700}>
-                                <tspan x={cx} dy="0">{monthlyText}</tspan>
-                              </text>
-                            );
-                          }} />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                
-
-                {/* Bloco de "Excedente Esperado" removido conforme solicitação */}
-
-                {/* Indicadores: Poupança e Endividamento */}
-                <div className="mt-4 grid md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">% de Poupança</span>
-                      <span className="text-foreground font-medium">{poupancaPercent}%</span>
-                    </div>
-                    <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Excedente Mensal / Renda Mensal</div>
-                  </div>
-                  <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">% de Endividamento</span>
-                      <span className="text-foreground font-medium">{endividamentoPercent}%</span>
-                    </div>
-                    <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Total de Passivos / Total de Ativos</div>
-                  </div>
-                </div>
-
-                {/* Detalhamento de Rendas e Despesas */}
-                <div className="mt-6 grid md:grid-cols-2 gap-6">
-                  <div>
-                  <h4 className="heading-3 mb-4">Detalhe das Rendas</h4>
-                    <div className="space-y-2">
-                      {data.rendas.map((renda, index) => (
-                        <div key={index} className="flex justify-between items-start">
-                          <div className="text-sm">
-                            <div className="font-medium">{renda.descricao || renda.fonte || 'Renda'}</div>
-                            {renda.tributacao && (
-                              <div className="text-xs text-muted-foreground">{renda.tributacao}</div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-6">
-                            <div className="text-sm font-medium">{formatCurrency(renda.valor)} / mês</div>
-                            <div className="text-sm font-medium text-muted-foreground">{formatCurrency((renda as any)?.valorAnual ?? (renda.valor * 12))} / ano</div>
+            {/* Detalhes abaixo dos números - mesmo padrão do Balanço Patrimonial */}
+            <div className="card-divider">
+              <div className="card-grid-2">
+                <div>
+                  <h4 className="heading-3 mb-4">Rendas</h4>
+                  <div className="card-list">
+                    {data.rendas.map((renda, index) => {
+                      const rendaMensal = Number(renda?.valor) || 0;
+                      const pct = totalIncome > 0 ? Math.round((rendaMensal / totalIncome) * 100) : 0;
+                      return (
+                        <div key={index} className="card-list-item">
+                          <span className="card-list-label">{renda.descricao || renda.fonte || 'Renda'}</span>
+                          <div className="card-flex-between">
+                            <span className="card-list-value">{formatCurrency(rendaMensal)}</span>
+                            <span className="card-list-percentage">({pct}%)</span>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
+                    <div className="card-divider card-list-item">
+                      <span className="font-semibold">Total de Rendas</span>
+                      <span className="font-semibold">{formatCurrency(totalIncome)}</span>
                     </div>
                   </div>
-                  <div>
-                  <h4 className="heading-3 mb-4">Detalhe das Despesas</h4>
-                    {data.despesas && data.despesas.length > 0 ? (
-                      <div className="space-y-2">
-                        {data.despesas.map((despesa, index) => (
-                          <div key={index} className="flex justify-between items-start">
-                            <div className="text-sm">
-                              <div className="font-medium">{despesa.descricao || despesa.categoria || despesa.tipo || despesa.item || 'Despesa'}</div>
-                            </div>
-                            <div className="flex items-center gap-6">
-                              <div className="text-sm font-medium">{formatCurrency(despesa.valor)} / mês</div>
-                              <div className="text-sm font-medium text-muted-foreground">{formatCurrency((despesa as any)?.valorAnual ?? (despesa.valor * 12))} / ano</div>
+                </div>
+                <div>
+                  <h4 className="heading-3 mb-4">Despesas</h4>
+                  {Array.isArray(data.despesas) && data.despesas.length > 0 ? (
+                    <div className="card-list">
+                      {(data.despesas || []).map((despesa, index) => {
+                        const valor = Number(despesa?.valor) || 0;
+                        const totalDespesasLista = (data.despesas || []).reduce((s, d) => s + (Number(d?.valor) || 0), 0) || totalExpensesMonthly;
+                        const pct = totalDespesasLista > 0 ? Math.round((valor / totalDespesasLista) * 100) : 0;
+                        return (
+                          <div key={index} className="card-list-item">
+                            <span className="card-list-label">{despesa.descricao || despesa.categoria || despesa.tipo || despesa.item || 'Despesa'}</span>
+                            <div className="card-flex-between">
+                              <span className="card-list-value">{formatCurrency(valor)}</span>
+                              <span className="card-list-percentage">({pct}%)</span>
                             </div>
                           </div>
-                        ))}
+                        );
+                      })}
+                      <div className="card-divider card-list-item">
+                        <span className="font-semibold">Total de Despesas</span>
+                        <span className="font-semibold">{formatCurrency((data.despesas || []).reduce((s, d) => s + (Number(d?.valor) || 0), 0) || totalExpensesMonthly)}</span>
                       </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Sem detalhes cadastrados</p>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Sem detalhes cadastrados</p>
+                  )}
                 </div>
               </div>
-            </HideableCard>
+            </div>
 
-            {/* Composição Patrimonial movida para Gestão de Ativos */}
-          </div>
+            {/* Gráfico mensal consolidado */}
+            <div className="card-divider">
+              <h3 className="card-title-standard text-lg">Renda vs. Despesas</h3>
+              <div className="w-full">
+                <div className="h-[300px] sm:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyChartData} margin={{ top: 24, right: 24, left: 8, bottom: 8 }} barCategoryGap={24} barGap={12}>
+                      <XAxis 
+                        dataKey="name" 
+                        interval={0} 
+                        tickLine={false} 
+                        axisLine={false} 
+                        tickMargin={10}
+                        tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                      />
+                      <YAxis 
+                        domain={[0, (dataMax: number) => Math.max(dataMax || 0, 1) * 1.25]} 
+                        tickFormatter={(v) => formatCurrencyCompact(Number(v))} 
+                        tickLine={false} 
+                        axisLine={false} 
+                        width={72}
+                        tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                      />
+                      <CartesianGrid 
+                        strokeDasharray="4 4" 
+                        strokeOpacity={0.25}
+                        stroke="hsl(var(--foreground))"
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                        formatter={(value: any, _name: any, payload: any) => {
+                          return [`${formatCurrency(Number(value))} / mês`, payload?.payload?.name || ''];
+                        }}
+                      />
+                      <defs>
+                        <linearGradient id="bar-income" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#36557C"/>
+                          <stop offset="100%" stopColor="#36557C"/>
+                        </linearGradient>
+                        <linearGradient id="bar-expense" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#E52B50"/>
+                          <stop offset="100%" stopColor="#E52B50"/>
+                        </linearGradient>
+                        <linearGradient id="bar-surplus" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#21887C"/>
+                          <stop offset="100%" stopColor="#21887C"/>
+                        </linearGradient>
+                        <linearGradient id="bar-surplus-negative" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#E52B50"/>
+                          <stop offset="100%" stopColor="#E52B50"/>
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={72}>
+                        {monthlyChartData.map((entry, index) => {
+                          const gradientId = entry.name === 'Renda'
+                            ? 'url(#bar-income)'
+                            : entry.name === 'Despesas'
+                              ? 'url(#bar-expense)'
+                              : (entry.value < 0 ? 'url(#bar-surplus-negative)' : 'url(#bar-surplus)');
+                          return (
+                            <Cell key={`cell-${index}`} fill={gradientId} />
+                          );
+                        })}
+                        <LabelList content={(labelProps: any) => {
+                          const { x, y, width, payload } = labelProps || {} as any;
+                          if (x == null || y == null) return null;
+                          const cx = (x as number) + ((width as number) || 0) / 2;
+                          const top = (y as number) - 10;
+                          const monthlyText = payload?.formatted ?? '';
+                          return (
+                            <text x={cx} y={top} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={12} fontWeight={700}>
+                              <tspan x={cx} dy="0">{monthlyText}</tspan>
+                            </text>
+                          );
+                        }} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Indicadores: Poupança e Endividamento */}
+              <div className="mt-4 grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">% de Poupança</span>
+                    <span className="text-foreground font-medium">{poupancaPercent}%</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Excedente Mensal / Renda Mensal</div>
+                </div>
+                <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">% de Endividamento</span>
+                    <span className="text-foreground font-medium">{endividamentoPercent}%</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Total de Passivos / Total de Ativos</div>
+                </div>
+              </div>
+            </div>
+          </HideableCard>
         </div>
+        {/* Composição Patrimonial movida para Gestão de Ativos */}
 
         {/* Balanço Patrimonial removido desta seção e mantido apenas em Gestão de Ativos */}
 

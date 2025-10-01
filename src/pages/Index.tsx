@@ -59,7 +59,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       // incluir despesas detalhadas se existirem em userReports
       despesas: userReports?.financas?.despesas || userReports?.financas?.despesas_detalhadas || [],
       // Utilizar diretamente a composição patrimonial do JSON, sem transformação
-      composicaoPatrimonial: userReports?.financas?.composicao_patrimonial || {},
+      composicaoPatrimonial: userReports?.financas?.composicao_patrimonial || userReports?.financas?.composicaoPatrimonial || {},
       // Processar os ativos de forma dinâmica, independente do tipo
       ativos: userReports?.financas?.ativos?.map(a => ({
         tipo: a.tipo,
@@ -75,7 +75,9 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
         : 0) - userReports.financas.resumo.despesas_mensais) || 0,
       rendas: userReports?.financas?.rendas || [],
       totalInvestido: (userReports?.financas?.composicao_patrimonial?.Investimentos
+        || userReports?.financas?.composicaoPatrimonial?.Investimentos
         || userReports?.composicao_patrimonial?.Investimentos
+        || userReports?.composicaoPatrimonial?.Investimentos
         || 0),
       ativos: (userReports?.financas?.ativos || userReports?.ativos || []).map((a: any) => ({
         tipo: a?.tipo,
@@ -247,7 +249,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
         <SectionVisibilityProvider>
           <AutoHideSections userReports={userReports} />
           <div className="relative h-screen overflow-hidden">
-            <Header showLogout={!!clientPropect} />
+            <Header showLogout={!!clientPropect} showSummaryToggle={!clientPropect} />
             <main className="h-[calc(100vh-64px)] overflow-y-auto">
               <div className="min-h-screen">
                 <CoverPage

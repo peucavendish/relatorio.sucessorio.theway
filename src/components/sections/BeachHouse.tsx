@@ -7,7 +7,7 @@ import HideableCard from '@/components/ui/HideableCard';
 import { useCardVisibility } from '@/context/CardVisibilityContext';
 import { Home, Umbrella, Calculator, Check, X, PiggyBank, ArrowRight, TrendingDown, Calendar } from 'lucide-react';
 import FinancingSimulator from '@/components/charts/FinancingSimulator';
-import { useSectionNumbering } from '@/hooks/useSectionNumbering';
+
 
 interface Strategy {
   estrategia: string;
@@ -51,7 +51,7 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
   const strategiesCardRef = useScrollAnimation();
   const impactCardRef = useScrollAnimation();
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
-  const sectionNumber = useSectionNumbering('beach-house');
+
 
   // Early return if no data provided
   if (!data?.imovelDesejado) {
@@ -101,7 +101,7 @@ const BeachHouse: React.FC<BeachHouseProps> = ({ data, hideControls }) => {
                 <Home size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="heading-2 mb-3">{sectionNumber}. Aquisição de Bens</h2>
+            <h2 className="heading-2 mb-3">Aquisição de Bens</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Estratégias para aquisição de um imóvel desejado, otimizando o investimento e preservando o planejamento financeiro.
             </p>

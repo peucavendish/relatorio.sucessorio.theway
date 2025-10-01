@@ -6,7 +6,7 @@ import { useCardVisibility } from '@/context/CardVisibilityContext';
 import StatusChip from '@/components/ui/StatusChip';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { useSectionNumbering } from '@/hooks/useSectionNumbering';
+
 // (Gráficos removidos desta seção)
 
 interface SuccessionPlanningProps {
@@ -20,7 +20,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
   const cardRef2 = useScrollAnimation();
   const cardRef3 = useScrollAnimation();
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
-  const sectionNumber = useSectionNumbering('succession');
+
 
   // Dados de previdência privada
   const previdenciaPrivada = {
@@ -77,7 +77,7 @@ const SuccessionPlanning: React.FC<SuccessionPlanningProps> = ({ data, hideContr
                 <Users size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-3">{sectionNumber}. Planejamento Sucessório</h2>
+            <h2 className="text-4xl font-bold mb-3">Planejamento Sucessório</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Estratégias para garantir a transferência eficiente de patrimônio, preservar a harmonia familiar e minimizar custos tributários no processo sucessório.
             </p>

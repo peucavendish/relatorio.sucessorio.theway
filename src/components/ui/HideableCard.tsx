@@ -31,14 +31,14 @@ const HideableCard: React.FC<HideableCardProps> = ({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleVisibility(); }}
-          className="absolute top-3 left-3 z-20 flex items-center justify-center p-1 rounded-full bg-background/80 hover:bg-background border border-border/50 transition-colors no-print"
+          className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 flex items-center justify-center h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-full bg-background/80 hover:bg-background border border-border/50 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 no-print"
           aria-label={isVisible ? "Ocultar informações" : "Mostrar informações"}
           title={isVisible ? "Ocultar informações" : "Mostrar informações"}
         >
           {isVisible ? (
-            <Eye size={16} className="text-muted-foreground" />
+            <Eye size={18} className="text-muted-foreground" />
           ) : (
-            <EyeOff size={16} className="text-muted-foreground" />
+            <EyeOff size={18} className="text-muted-foreground" />
           )}
         </button>
       )}

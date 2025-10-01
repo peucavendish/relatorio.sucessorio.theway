@@ -7,7 +7,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import RetirementProjectionChart from '@/components/charts/RetirementProjectionChart';
 import { useCardVisibility } from '@/context/CardVisibilityContext';
-import { useSectionNumbering } from '@/hooks/useSectionNumbering';
+
 
 interface RetirementData {
   ativos: Array<{ tipo: string; valor: number }>;
@@ -46,7 +46,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
   const projecaoRef = useScrollAnimation();
 
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
-  const sectionNumber = useSectionNumbering('retirement');
+
   const [projectionData, setProjectionData] = React.useState<{
     capitalNecessario: number;
     aporteMensal: number;
@@ -135,7 +135,7 @@ const RetirementPlanning: React.FC<RetirementPlanningProps> = ({ data, hideContr
                 <PiggyBank size={28} className="text-accent" />
               </div>
             </div>
-            <h2 className="heading-2 mb-3">{sectionNumber}. Planejamento de Aposentadoria</h2>
+            <h2 className="heading-2 mb-3">Planejamento de Aposentadoria</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Estratégias e projeções para garantir sua independência financeira e
               qualidade de vida na aposentadoria.

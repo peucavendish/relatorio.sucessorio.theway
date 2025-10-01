@@ -9,6 +9,8 @@ interface SectionVisibilityContextType {
     getVisibleSections: () => string[];
     getHiddenSections: () => string[];
     resetAllSectionsToVisible: () => void;
+    summaryMode: boolean;
+    setSummaryMode: (enabled: boolean) => void;
 }
 
 const SectionVisibilityContext = createContext<SectionVisibilityContextType | undefined>(undefined);
@@ -39,6 +41,8 @@ export const SectionVisibilityProvider: React.FC<{ children: React.ReactNode }> 
     const [hiddenSections, setHiddenSections] = useState<Record<string, boolean>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [initialized, setInitialized] = useState(false);
+    const [summaryMode, setSummaryModeState] = useState(false);
+    const previousHiddenRef = React.useRef<Record<string, boolean> | null>(null);
 
     // Função para obter o session_id da URL
     const getSessionId = useCallback(() => {
@@ -130,6 +134,35 @@ export const SectionVisibilityProvider: React.FC<{ children: React.ReactNode }> 
         });
     }, [updateBackendState]);
 
+    // Alterna o modo resumido do relatório
+    const setSummaryMode = useCallback((enabled: boolean) => {
+        setSummaryModeState(enabled);
+
+        // Se ainda não inicializou o estado de seções, não faz nada
+        if (isLoading) return;
+
+        if (enabled) {
+            // Salva estado anterior para restaurar depois
+            previousHiddenRef.current = { ...hiddenSections };
+
+            const newState = {
+                ...hiddenSections,
+                // Ocultar seções para versão resumida
+                'beach-house': true,     // Aquisição de Imóveis
+                'succession': true,      // Planejamento Sucessório
+                'tax': true              // Planejamento Tributário
+            };
+            setHiddenSections(newState);
+            updateBackendState(newState);
+        } else {
+            // Restaurar estado anterior (ou todas visíveis se não houver)
+            const restored = previousHiddenRef.current ?? createAllSectionsVisibleState();
+            setHiddenSections(restored);
+            updateBackendState(restored);
+            previousHiddenRef.current = null;
+        }
+    }, [hiddenSections, isLoading, updateBackendState]);
+
     // Função para verificar se uma seção está visível
     const isSectionVisible = useCallback((sectionId: string) => {
         return !hiddenSections[sectionId];
@@ -159,7 +192,9 @@ export const SectionVisibilityProvider: React.FC<{ children: React.ReactNode }> 
         isLoading,
         getVisibleSections,
         getHiddenSections,
-        resetAllSectionsToVisible
+        resetAllSectionsToVisible,
+        summaryMode,
+        setSummaryMode
     };
 
     return (

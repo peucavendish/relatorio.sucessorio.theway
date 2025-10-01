@@ -13,7 +13,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import DonutChart from '@/components/charts/DonutChart';
 import { formatCurrency } from '@/utils/formatCurrency';
 import ProgressBar from '@/components/ui/ProgressBar';
-import { useSectionNumbering } from '@/hooks/useSectionNumbering';
+
 
 interface TotalAssetAllocationProps {
   data?: any;
@@ -25,7 +25,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const estrategiaRef = useScrollAnimation();
   const balancoRef = useScrollAnimation();
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
-  const sectionNumber = useSectionNumbering('total-asset-allocation');
+
 
   // Normaliza a origem dos dados: pode vir como array, com wrapper `output`,
   // com `financas` dentro de `output`, ou diretamente o objeto de finanças
@@ -55,7 +55,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
     return `hsl(${hue}, 70%, 60%)`;
   };
 
-  const composition = (fin?.composicao_patrimonial || (source as any)?.composicao_patrimonial || {}) as Record<string, number>;
+  const composition = (fin?.composicao_patrimonial || fin?.composicaoPatrimonial || (source as any)?.composicao_patrimonial || (source as any)?.composicaoPatrimonial || {}) as Record<string, number>;
 
   // Lógica: Investimentos - Financeiros = Investimentos total - Previdência - Internacional
   // Removemos subgrupos da exibição e inserimos o residual financeiro sob novo rótulo
@@ -220,10 +220,12 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const progressoCoberturaPct = Math.min(100, Math.round((coberturaMeses / metaCoberturaMeses) * 100));
   const progressoCor: 'success' | 'warning' | 'danger' | 'gold' =
     coberturaMeses >= 12 ? 'gold' : coberturaMeses >= 6 ? 'warning' : 'danger';
+  const valorMetaCobertura: number = metaCoberturaMeses * despesasMensais;
+  const deltaValorCobertura: number = valorMetaCobertura - totalCurtoPrazo;
 
   // Exposição Geográfica dos Investimentos (Brasil vs Exterior)
   // Denominador: valor total de "Investimentos" informado em composicao_patrimonial
-  const totalInvestimentosComposicao: number = Number(((fin?.composicao_patrimonial || (source as any)?.composicao_patrimonial || {}) as any)['Investimentos'] || 0);
+  const totalInvestimentosComposicao: number = Number(((fin?.composicao_patrimonial || fin?.composicaoPatrimonial || (source as any)?.composicao_patrimonial || (source as any)?.composicaoPatrimonial || {}) as any)['Investimentos'] || 0);
 
   // Numerador (Exterior): Preferir indicador explícito quando existir; senão, inferir pelos ativos
   const valorExteriorIndicadores: number = Number(
@@ -245,6 +247,8 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const pctBrasil = totalInvestimentosComposicao > 0 ? 100 - pctExterior : 0;
   const recomendacaoExteriorPct = 18;
   const deltaExteriorPct = recomendacaoExteriorPct - pctExterior;
+  const valorExteriorRecomendado: number = (totalInvestimentosComposicao * recomendacaoExteriorPct) / 100;
+  const deltaExteriorValor: number = valorExteriorRecomendado - valorExterior;
 
   const geoExposureData = [
     { name: 'Brasil', value: pctBrasil, color: '#36557C', rawValue: formatCurrency(valorBrasil), raw: valorBrasil },
@@ -271,7 +275,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                 <BarChart size={28} className="text-financial-info" />
               </div>
             </div>
-            <h2 className="heading-2 mb-3">{sectionNumber}. Gestão de Ativos</h2>
+            <h2 className="heading-2 mb-3">Gestão de Ativos</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Total Asset Allocation - Avaliar a alocação patrimonial completa do cliente (ativos financeiros e reais), identificando concentração, liquidez, coerência com os objetivos e perfil de risco.
             </p>
@@ -457,15 +461,15 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                   </div>
                   <div className="p-3 rounded-lg border border-border/50 bg-muted/10 text-center min-w-0">
                   <div className="text-xs text-muted-foreground whitespace-normal break-words">Recomendação Exterior</div>
-                  <div className="text-base sm:text-lg font-semibold">18%</div>
+                  <div className="text-base sm:text-lg font-semibold">18% ({formatCurrency(valorExteriorRecomendado)})</div>
                   </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
                   <div className={`p-2 rounded-md ${alertClass}`}>
                     {deltaExteriorPct > 0 ? (
-                      <span>Exposição ao exterior abaixo do recomendado em {Math.abs(deltaExteriorPct)} p.p.</span>
+                      <span>Exposição ao exterior abaixo do recomendado em {Math.abs(deltaExteriorPct)} p.p. ({formatCurrency(Math.max(0, deltaExteriorValor))} a mais necessários).</span>
                     ) : (
-                      <span>Exposição ao exterior alinhada à recomendação.</span>
+                      <span>Exposição ao exterior alinhada à recomendação {deltaExteriorValor < 0 ? `(excesso de ${formatCurrency(Math.abs(deltaExteriorValor))})` : ''}.</span>
                     )}
                   </div>
                   </div>
@@ -526,10 +530,22 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                         <span>Valor total de Ativos de Curto Prazo: {formatCurrency(totalCurtoPrazo)}</span>
                       </div>
                       <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
-                        <span></span>
-                        <span className="text-foreground font-medium">Recomendação Alta Vista: {metaCoberturaMeses} meses</span>
+                        <span>Despesas mensais consideradas: {formatCurrency(despesasMensais)}</span>
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-1">Cálculo: "Curto Prazo - Alta Liquidez" / Despesas mensais</div>
+                      <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+                        <span></span>
+                        <span className="text-foreground font-medium">Recomendação Alta Vista: {metaCoberturaMeses} meses ({formatCurrency(valorMetaCobertura)})</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-1">Cálculo: {formatCurrency(totalCurtoPrazo)} / {formatCurrency(despesasMensais)} = {horizonteCobertura} meses</div>
+                      {despesasMensais > 0 && (
+                        <div className="text-[11px] mt-1">
+                          {deltaValorCobertura > 0 ? (
+                            <span className="text-destructive">Faltam {formatCurrency(deltaValorCobertura)} para atingir a meta de {metaCoberturaMeses} meses.</span>
+                          ) : (
+                            <span className="text-foreground">Excesso de {formatCurrency(Math.abs(deltaValorCobertura))} acima da meta de {metaCoberturaMeses} meses.</span>
+                          )}
+                        </div>
+                      )}
                       <div className="mt-3">
                         <ProgressBar
                           value={coberturaMeses}

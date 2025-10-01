@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Card } from '../ui/card';
+import PlanningMap from './PlanningMap';
 import { Calendar, MapPin, User, Users, Target, PiggyBank } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -125,6 +126,11 @@ const CoverPage: React.FC<CoverPageProps> = ({
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* Planning Map */}
+        <div className="mb-6">
+          <PlanningMap />
         </div>
 
         {/* About This Report */}
