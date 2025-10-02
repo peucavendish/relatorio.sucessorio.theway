@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Copy } from 'lucide-react';
 import { Input } from "@/components/ui/input";
+import { useCardVisibility } from '@/context/CardVisibilityContext';
+import { useSectionVisibility } from '@/context/SectionVisibilityContext';
 
 interface UserReports {
   cliente?: {
@@ -35,6 +37,10 @@ const FloatingActions: React.FC<FloatingActionsProps> = ({ className, userReport
     session_id: string;
   } | null>(null);
 
+  // Hooks dos contextos de visibilidade
+  const { hiddenCards } = useCardVisibility();
+  const { hiddenSections } = useSectionVisibility();
+
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get('sessionId');
 
@@ -50,7 +56,9 @@ const FloatingActions: React.FC<FloatingActionsProps> = ({ className, userReport
       const response = await axios.post(`${apiUrl}/gerar-relatorio-cliente`, {
         name: userReports?.cliente?.nome,
         email: email,
-        session_id: sessionId
+        session_id: sessionId,
+        hiddenSections: hiddenSections,
+        hiddenCards: hiddenCards
       });
 
       if (response.status === 200) {
