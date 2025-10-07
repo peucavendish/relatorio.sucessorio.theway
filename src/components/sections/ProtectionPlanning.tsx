@@ -41,6 +41,11 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
   const descricaoDO = protectionData?.seguroDO?.descricao || 'Proteção para diretores e administradores contra reclamações decorrentes de atos de gestão.';
   const descricaoViagem = protectionData?.seguroInternacional?.descricao || 'Cobre despesas médicas, extravio de bagagem e imprevistos durante viagens internacionais.';
 
+  // Lista normalizada de seguros existentes (pode estar vazia)
+  const segurosExistentes = Array.isArray(protectionData?.seguros_existentes)
+    ? protectionData.seguros_existentes
+    : [];
+
   // Referência de renda mensal para simulação de garantia (aposentadoria desejada ou renda atual)
   // Soma todas as rendas mensais do cliente
   const minhasRendasMensais = Array.isArray(data?.financas?.rendas)
@@ -105,6 +110,56 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
             </CardContent>
           </HideableCard>
         )}
+
+        {/* Seguros Existentes informados no JSON (exibe mesmo se vazio) */}
+        <HideableCard
+          id="seguros-existentes"
+          isVisible={isCardVisible("seguros-existentes")}
+          onToggleVisibility={() => toggleCardVisibility("seguros-existentes")}
+          hideControls={hideControls}
+          className="mb-8"
+        >
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Umbrella className="h-8 w-8 text-accent" />
+              <div>
+                <CardTitle>Seguros Existentes</CardTitle>
+                <CardDescription>Apólices informadas pelo cliente</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {segurosExistentes.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nenhum seguro informado</div>
+            ) : (
+              <div className="space-y-3">
+                {segurosExistentes.map((seg: any, index: number) => (
+                  <div key={index} className="p-4 border rounded-lg bg-muted/30">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Tipo</div>
+                        <div className="font-medium">{seg?.tipo || '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Seguradora</div>
+                        <div className="font-medium">{seg?.seguradora || '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Valor de Cobertura</div>
+                        <div className="font-medium">{formatCurrency(Number(seg?.valor_cobertura) || 0)}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Custo Mensal</div>
+                        <div className="font-medium">{formatCurrency(Number(seg?.custo_mensal) || 0)}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </HideableCard>
+
 
         {/* Grupo: Proteções em Caso de Falecimento */}
         <div className="mt-2 mb-6">
@@ -175,7 +230,8 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
               const baseInventario = Math.max(0, totalPatrimonio - totalPrevidencia);
               const taxaSucessao = 0.14; // 14%
               const custoSucessorio = Math.max(0, baseInventario * taxaSucessao);
-              const transmissivelAosHerdeiros = Math.max(0, baseInventario - custoSucessorio);
+              const transmissivelSemPrevidencia = Math.max(0, baseInventario - custoSucessorio);
+              const transmissivelAosHerdeiros = Math.max(0, transmissivelSemPrevidencia + totalPrevidencia);
 
               const chartData = [
                 { name: 'Inventário', Total: Math.round(totalPatrimonio), Custo: Math.round(custoSucessorio), Transmissivel: Math.round(transmissivelAosHerdeiros) }
@@ -222,7 +278,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
                         config={{
                           Total: { label: 'Patrimônio total', color: '#36557C' },
                           Custo: { label: 'Custo de transmissão', color: '#E52B50' },
-                          Transmissivel: { label: 'Patrimônio transmissível', color: '#21887C' },
+                          Transmissivel: { label: 'Patrimônio transmissível (inclui previdência)', color: '#21887C' },
                         }}
                         className="w-full h-[240px] sm:h-[320px] md:h-80"
                       >

@@ -347,6 +347,7 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
 
   const specialistUrl = 'https://outlook.office.com/bookwithme/user/431917f0f5654e55bb2fa25f5b91cc7c@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=pcard';
   const corporateUrl = 'https://outlook.office.com/bookwithme/user/f6b65491276744fd8454f26269b6002a@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=plink';
+  const internacionalUrl = 'https://outlook.office.com/bookwithme/user/ab98a94f3c5c43399ae4897ef17248ab@altavistainvest.com.br?anonymous&ismsaljsauthenabled&ep=plink';
 
   const consultoresPorCard: Record<string, { nome: string; url: string }[]> = {
     'protecao-patrimonial': [
@@ -376,7 +377,11 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
     } else {
       // Para outros cards, comportamento original
       setActivatedCards(prev => new Set([...prev, cardId]));
-      const url = cardId === 'corporate-solucoes-pj' ? corporateUrl : specialistUrl;
+      const url = cardId === 'corporate-solucoes-pj'
+        ? corporateUrl
+        : cardId === 'internacional'
+          ? internacionalUrl
+          : specialistUrl;
       window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
@@ -475,11 +480,11 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ data, hideControls, sessionId }
                       size="sm" 
                       className="w-full group-hover:bg-accent group-hover:text-accent-foreground transition-colors"
                       onClick={() => handleSpecialistClick(fase.id)}
-                      disabled={!specialistAvailable || !['protecao-patrimonial', 'projetos-imobilizados', 'corporate-solucoes-pj'].includes(fase.id)}
+                      disabled={!specialistAvailable || !['protecao-patrimonial', 'projetos-imobilizados', 'corporate-solucoes-pj', 'internacional'].includes(fase.id)}
                     >
                       Acionamento do Especialista
                     </Button>
-                    {!['protecao-patrimonial', 'projetos-imobilizados', 'corporate-solucoes-pj'].includes(fase.id) && (
+                    {!['protecao-patrimonial', 'projetos-imobilizados', 'corporate-solucoes-pj', 'internacional'].includes(fase.id) && (
                       <div className="text-center text-xs text-muted-foreground mt-1">
                         Em breve
                       </div>

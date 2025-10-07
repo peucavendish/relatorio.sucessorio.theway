@@ -141,7 +141,8 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       seguroDO: userReports?.protecao?.seguroDO || {},
       seguroInternacional: userReports?.protecao?.seguroInternacional || {},
       protecaoJuridica: userReports?.protecao?.protecaoJuridica || {},
-      recomendacoesAdicionais: userReports?.protecao?.recomendacoesAdicionais || {}
+      recomendacoesAdicionais: userReports?.protecao?.recomendacoesAdicionais || {},
+      seguros_existentes: userReports?.protecao?.seguros_existentes || []
     },
     sucessao: userReports?.sucessao || {},
     previdencia_privada: userReports?.previdencia_privada || [],
