@@ -12,6 +12,9 @@ interface ClientData {
   estadoCivil: string;
   regimeCasamento: string;
   residencia: string;
+  xpCode?: string;
+  email?: string;
+  isProspect?: boolean;
 }
 
 interface CoverPageProps {
@@ -54,6 +57,16 @@ const CoverPage: React.FC<CoverPageProps> = ({
   const cardRef1 = useScrollAnimation();
   const cardRef2 = useScrollAnimation();
 
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .map(part => part[0]?.toUpperCase())
+      .join('. ')
+      .concat('.');
+  };
+
   return (
     <section id="cover" className="min-h-screen flex flex-col items-center justify-center py-8 px-4">
       <div className="section-container">
@@ -68,7 +81,7 @@ const CoverPage: React.FC<CoverPageProps> = ({
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-3">Planejamento Patrimonial</h1>
             <p className="text-muted-foreground">
-              Preparado especialmente para <span className="font-medium text-foreground">{clientData.nome}</span>
+              Preparado especialmente para <span className="font-medium text-foreground">{getInitials(clientData.nome)}</span>
             </p>
           </div>
         </div>
@@ -87,8 +100,14 @@ const CoverPage: React.FC<CoverPageProps> = ({
                 </div>
                 <div>
                   <h3 className="heading-3">Nome</h3>
-                  <p className="text-lg">{clientData.nome}</p>
+                  <p className="text-lg">{getInitials(clientData.nome)}</p>
                   <p className="text-sm text-muted-foreground">{clientData.idade} anos</p>
+                  {clientData.isProspect && clientData.email && (
+                    <p className="text-sm text-muted-foreground">Email: <span className="font-medium">{clientData.email}</span></p>
+                  )}
+                  {clientData.xpCode && (
+                    <p className="text-sm text-muted-foreground">Código XP: <span className="font-medium">{clientData.xpCode}</span></p>
+                  )}
                 </div>
               </div>
 

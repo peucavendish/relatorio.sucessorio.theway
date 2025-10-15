@@ -46,7 +46,19 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       idade: userReports?.cliente?.idade || 0,
       estadoCivil: userReports?.cliente?.estadoCivil || "",
       regimeCasamento: userReports?.cliente?.regimeCasamento || "",
-      residencia: userReports?.cliente?.residencia || ""
+      residencia: userReports?.cliente?.residencia || "",
+      xpCode:
+        userReports?.cliente?.codigoXP ||
+        userReports?.cliente?.codigo_xp ||
+        userReports?.cliente?.xpCode ||
+        userReports?.cliente?.xp_code ||
+        userReports?.codigoXP ||
+        userReports?.codigo_xp ||
+        userReports?.xpCode ||
+        userReports?.xp_code ||
+        "",
+      email: userReports?.cliente?.email || user?.email || "",
+      isProspect: clientPropect || false
     },
     financas: {
       patrimonioLiquido: userReports?.financas?.resumo?.patrimonio_liquido || 0,
