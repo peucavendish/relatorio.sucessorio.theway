@@ -28,7 +28,6 @@ function pow1p(baseRate: number, periods: number) {
 }
 
 
-const SNAPSHOTS_KEY = 'implementationMonitoring.snapshots';
 
 function getQuarterLabel(dateIso: string) {
   const d = new Date(dateIso);
@@ -77,27 +76,6 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
   React.useEffect(() => {
     const loadReviewBoardData = async () => {
       if (!sessionId) {
-        // Fallback para localStorage se não houver sessionId
-        try {
-          const savedCdi = localStorage.getItem('implementationMonitoring.cdiAnnual');
-          const savedIpca = localStorage.getItem('implementationMonitoring.ipcaAnnual');
-          if (savedCdi !== null) {
-            const v = parseFloat(savedCdi);
-            if (Number.isFinite(v)) setCdiAnnual(v);
-          }
-          if (savedIpca !== null) {
-            const v = parseFloat(savedIpca);
-            if (Number.isFinite(v)) setIpcaAnnual(v);
-          }
-
-          const savedSnaps = localStorage.getItem(SNAPSHOTS_KEY);
-          if (savedSnaps) {
-            const parsed = JSON.parse(savedSnaps);
-            if (Array.isArray(parsed)) {
-              setSnapshots(parsed);
-            }
-          }
-        } catch { }
         return;
       }
 
@@ -109,16 +87,6 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
         }
       } catch (error) {
         console.error('Erro ao carregar dados do review board:', error);
-        // Fallback para localStorage em caso de erro
-        try {
-          const savedSnaps = localStorage.getItem(SNAPSHOTS_KEY);
-          if (savedSnaps) {
-            const parsed = JSON.parse(savedSnaps);
-            if (Array.isArray(parsed)) {
-              setSnapshots(parsed);
-            }
-          }
-        } catch { }
       }
     };
 
@@ -175,12 +143,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
           await reviewBoardService.saveReviewBoard(sessionId, reviewBoardData);
         } catch (error) {
           console.error('Erro ao salvar no banco de dados:', error);
-          // Fallback para localStorage em caso de erro
-          try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
         }
-      } else {
-        // Fallback para localStorage se não houver sessionId
-        try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
       }
       setCaptured(true);
       setTimeout(() => setCaptured(false), 1800);
@@ -204,12 +167,7 @@ const ImplementationMonitoring: React.FC<ImplementationMonitoringProps> = ({ dat
         await reviewBoardService.saveReviewBoard(sessionId, reviewBoardData);
       } catch (error) {
         console.error('Erro ao salvar no banco de dados:', error);
-        // Fallback para localStorage em caso de erro
-        try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
       }
-    } else {
-      // Fallback para localStorage se não houver sessionId
-      try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updatedSnapshots)); } catch { }
     }
   };
 

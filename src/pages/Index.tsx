@@ -187,11 +187,12 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     const fetchUserReportsData = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('sessionId');
+        const sessionIdFromUrl = urlParams.get('sessionId');
 
-        if (sessionId) {
+        if (sessionIdFromUrl) {
+          setSessionId(sessionIdFromUrl); // ← Definir o sessionId no estado
           const apiUrl = import.meta.env.VITE_API_THE_WAY;
-          const response = await axios.get(`${apiUrl}/client-reports/${sessionId}`);
+          const response = await axios.get(`${apiUrl}/client-reports/${sessionIdFromUrl}`);
 
           const reportData = JSON.parse(response.data[0].report_data);
           const normalizeReport = (raw: any) => {

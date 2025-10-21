@@ -35,6 +35,10 @@ export interface ReviewBoardListResponse {
 
 export const reviewBoardService = {
     async saveReviewBoard(sessionId: string, reviewBoard: ReviewBoardData): Promise<ReviewBoardResponse> {
+        if (!sessionId) {
+            throw new Error('SessionId is required');
+        }
+
         try {
             const response = await api.post('/clients/review-board', {
                 session_id: sessionId,
@@ -48,6 +52,10 @@ export const reviewBoardService = {
     },
 
     async loadReviewBoard(sessionId: string): Promise<ReviewBoardListResponse> {
+        if (!sessionId) {
+            throw new Error('SessionId is required');
+        }
+
         try {
             const response = await api.get('/clients/review-board', {
                 params: {
