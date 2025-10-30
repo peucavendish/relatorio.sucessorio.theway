@@ -532,10 +532,16 @@ export const calculateRetirementProjection = (
       return saque_mensal_desejado;
     }
     
-    // Para clientes aposentados no cenário target com overrideEndAge, calcular renda que zera no ano especificado
-    // mesmo sem override de aporte (quando há excedente)
+    // Para clientes aposentados no cenário target sem override de aporte,
+    // usar sempre a renda mensal editável como renda proposta
     const meses_acumulacao_check = (idade_para_aposentar - idade_atual) * 12;
-    if (meses_acumulacao_check <= 0 && overrideEndAge != null && overrideAporteMensal == null) {
+    if (meses_acumulacao_check <= 0 && overrideAporteMensal == null) {
+      return saque_mensal_desejado;
+    }
+    
+    // Para clientes aposentados no cenário target com overrideEndAge e override de aporte,
+    // calcular renda que zera no ano especificado
+    if (meses_acumulacao_check <= 0 && overrideEndAge != null && overrideAporteMensal != null) {
       // Calcular renda que zera no overrideEndAge especificado
       const capitalNaAposentadoria = capitalDisponivelHoje;
       const taxa_mensal_real_consumo_check = Math.pow(1 + rentabilidade_real_liquida_consumo, 1 / 12) - 1;
