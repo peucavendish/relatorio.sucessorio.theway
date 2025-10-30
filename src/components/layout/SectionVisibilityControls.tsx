@@ -57,6 +57,12 @@ const SECTIONS_CONFIG = [
     icon: "💰"
   },
   {
+    id: "financial-security-indicator",
+    label: "Indicador de Segurança Financeira",
+    description: "Avaliação por pilares de segurança",
+    icon: "🔒"
+  },
+  {
     id: "action-plan",
     label: "Plano de Ação",
     description: "Ações prioritárias e cronograma",

@@ -20,6 +20,7 @@ const steps: Step[] = [
   { id: 'protection', title: 'Proteção', description: 'Seguros e blindagem' },
   { id: 'succession', title: 'Sucessão', description: 'Estrutura patrimonial' },
   { id: 'tax', title: 'Tributação', description: 'Eficiência fiscal' },
+  { id: 'financial-security-indicator', title: 'Indicador de Segurança', description: 'Avaliação por pilares' },
   { id: 'action-plan', title: 'Plano de Ação', description: 'Próximos passos' },
   { id: 'implementation-monitoring', title: 'Acompanhamento', description: 'Execução e monitoramento' },
 ];

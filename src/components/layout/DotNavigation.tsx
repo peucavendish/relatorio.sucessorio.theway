@@ -13,6 +13,7 @@ const sections = [
   { id: 'protection', label: 'Proteção Patrimonial' },
   { id: 'succession', label: 'Planejamento Sucessório' },
   { id: 'tax', label: 'Planejamento Tributário' },
+  { id: 'financial-security-indicator', label: 'Indicador de Segurança' },
   { id: 'action-plan', label: 'Plano de Ação' }
 ];
 

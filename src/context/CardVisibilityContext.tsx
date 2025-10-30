@@ -26,6 +26,8 @@ const ALL_CARD_IDS = [
     "passivos",
     "ativos",
     "financial-resumo",
+    "balanco-patrimonial",
+    "indicadores-financeiros",
     // novo card de comparativo IRPF
     "comparativo-irpf"
 ];
@@ -81,6 +83,8 @@ export const CardVisibilityProvider: React.FC<{ children: React.ReactNode }> = (
                     "recomendacoes-adicionais": false,
                     "impacto-financeiro-sucessao": false,
                     "previdencia-privada-sucessao": false,
+                    "balanco-patrimonial": false,
+                    "indicadores-financeiros": false,
                     // garante visibilidade do novo card
                     "comparativo-irpf": false
                 };
@@ -92,7 +96,18 @@ export const CardVisibilityProvider: React.FC<{ children: React.ReactNode }> = (
 
                 setHiddenCards(allVisibleState);
             } else {
-                setHiddenCards(response.data.hiddenCards);
+                // Garante que todos os cards da lista estejam presentes no estado
+                const backendState = response.data.hiddenCards;
+                const allCardsState = createAllHiddenState();
+                // Mescla: usa o estado do backend, mas adiciona novos cards como visíveis
+                const mergedState = { ...allCardsState, ...backendState };
+                // Garante que novos cards não presentes no backend sejam visíveis
+                ALL_CARD_IDS.forEach(cardId => {
+                    if (mergedState[cardId] === undefined) {
+                        mergedState[cardId] = false; // false = visível
+                    }
+                });
+                setHiddenCards(mergedState);
             }
             setInitialized(true);
         } catch (error) {
@@ -142,7 +157,12 @@ export const CardVisibilityProvider: React.FC<{ children: React.ReactNode }> = (
 
     // Função para verificar se um card está visível
     const isCardVisible = useCallback((cardId: string) => {
-        return !hiddenCards[cardId];
+        // Se o card não está no estado, assume que está visível (padrão)
+        const isHidden = hiddenCards[cardId];
+        if (isHidden === undefined) {
+            return true;
+        }
+        return !isHidden;
     }, [hiddenCards]);
 
     const value = {

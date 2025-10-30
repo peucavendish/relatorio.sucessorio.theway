@@ -26,7 +26,6 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   const balancoRef = useScrollAnimation();
   const { isCardVisible, toggleCardVisibility } = useCardVisibility();
 
-
   // Normaliza a origem dos dados: pode vir como array, com wrapper `output`,
   // com `financas` dentro de `output`, ou diretamente o objeto de finanças
   const source = Array.isArray(data)
@@ -157,6 +156,7 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
   ];
   const totalAtivosLista: number = ativosBalanco.reduce((sum: number, a: any) => sum + (Number(a?.valor) || 0), 0);
   const endividamento: number = totalAtivos > 0 ? Number(((totalPassivos / totalAtivos) * 100).toFixed(2)) : 0;
+  
   const rendaTotal: number = Array.isArray(fin?.rendas)
     ? fin.rendas.reduce((sum: number, renda: any) => sum + (Number(renda?.valor) || 0), 0)
     : 0;
@@ -287,17 +287,13 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
           ref={balancoRef as React.RefObject<HTMLDivElement>}
           className="mb-8 animate-on-scroll"
         >
-          <HideableCard
-            id="balanco-patrimonial"
-            isVisible={isCardVisible("balanco-patrimonial")}
-            onToggleVisibility={() => toggleCardVisibility("balanco-patrimonial")}
-            hideControls={hideControls}
-          >
-            <CardHeader>
-              <CardTitle className="card-title-standard text-lg">Balanço Patrimonial</CardTitle>
-              <CardDescription>Consolidação de ativos, passivos e patrimônio líquido</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <Card className="relative">
+            <div className="p-8">
+              <CardHeader>
+                <CardTitle className="card-title-standard text-lg">Balanço Patrimonial</CardTitle>
+                <CardDescription>Consolidação de ativos, passivos e patrimônio líquido</CardDescription>
+              </CardHeader>
+              <CardContent>
               <div className="card-grid-3">
                 <div className="card-metric">
                   <h3 className="card-metric-label">Total de Ativos</h3>
@@ -384,8 +380,30 @@ const TotalAssetAllocation: React.FC<TotalAssetAllocationProps> = ({ data, hideC
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </HideableCard>
+
+              {/* Indicadores: Poupança e Endividamento */}
+              <div className="mt-8 pt-8 border-t border-border/50">
+                <h4 className="heading-3 mb-4">Indicadores Financeiros</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">% de Poupança</span>
+                      <span className="text-foreground font-medium">{poupanca}%</span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Excedente Mensal / Renda Mensal</div>
+                  </div>
+                  <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">% de Endividamento</span>
+                      <span className="text-foreground font-medium">{totalAtivos > 0 ? Math.round((totalPassivos / totalAtivos) * 100) : 0}%</span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Total de Passivos / Total de Ativos</div>
+                  </div>
+                </div>
+              </div>
+              </CardContent>
+            </div>
+          </Card>
         </div>
 
         {/* Estratégia Recomendada */}

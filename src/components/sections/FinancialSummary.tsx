@@ -80,13 +80,6 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
     },
   ];
 
-  // Indicadores: % Endividamento e % Poupança
-  const endividamentoPercent = totalAtivosLista > 0
-    ? Math.round((totalPassivosLista / totalAtivosLista) * 100)
-    : 0;
-  const poupancaPercent = totalIncome > 0
-    ? Math.round((surplusMonthly / totalIncome) * 100)
-    : 0;
 
   return (
     <section className="py-16 px-4" id="summary">
@@ -168,26 +161,46 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 <div>
                   <h4 className="heading-3 mb-4">Despesas</h4>
                   {Array.isArray(data.despesas) && data.despesas.length > 0 ? (
-                    <div className="card-list">
-                      {(data.despesas || []).map((despesa, index) => {
-                        const valor = Number(despesa?.valor) || 0;
-                        const totalDespesasLista = (data.despesas || []).reduce((s, d) => s + (Number(d?.valor) || 0), 0) || totalExpensesMonthly;
-                        const pct = totalDespesasLista > 0 ? Math.round((valor / totalDespesasLista) * 100) : 0;
-                        return (
-                          <div key={index} className="card-list-item">
-                            <span className="card-list-label">{despesa.descricao || despesa.categoria || despesa.tipo || despesa.item || 'Despesa'}</span>
-                            <div className="card-flex-between">
-                              <span className="card-list-value">{formatCurrency(valor)}</span>
-                              <span className="card-list-percentage">({pct}%)</span>
-                            </div>
+                    (() => {
+                      // Calcular total das despesas detalhadas
+                      const totalDespesasDetalhadas = (data.despesas || []).reduce((s, d) => s + (Number(d?.valor) || 0), 0);
+                      // Verificar se há diferença não detalhada
+                      const diferencaNaoDetalhada = totalExpensesMonthly - totalDespesasDetalhadas;
+                      const temDespesasGerais = diferencaNaoDetalhada > 0.01; // Considerar diferenças maiores que 1 centavo
+                      
+                      // Array de despesas para exibir (inclui despesas gerais se necessário)
+                      const despesasParaExibir = [...(data.despesas || [])];
+                      if (temDespesasGerais) {
+                        despesasParaExibir.push({
+                          descricao: 'Despesas Gerais',
+                          valor: diferencaNaoDetalhada
+                        });
+                      }
+                      
+                      return (
+                        <div className="card-list">
+                          {despesasParaExibir.map((despesa, index) => {
+                            const valor = Number(despesa?.valor) || 0;
+                            const pct = totalExpensesMonthly > 0 ? Math.round((valor / totalExpensesMonthly) * 100) : 0;
+                            return (
+                              <div key={index} className="card-list-item">
+                                <span className="card-list-label">
+                                  {despesa.descricao || despesa.categoria || despesa.tipo || despesa.item || 'Despesa'}
+                                </span>
+                                <div className="card-flex-between">
+                                  <span className="card-list-value">{formatCurrency(valor)}</span>
+                                  <span className="card-list-percentage">({pct}%)</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <div className="card-divider card-list-item">
+                            <span className="font-semibold">Total de Despesas</span>
+                            <span className="font-semibold">{formatCurrency(totalExpensesMonthly)}</span>
                           </div>
-                        );
-                      })}
-                      <div className="card-divider card-list-item">
-                        <span className="font-semibold">Total de Despesas</span>
-                        <span className="font-semibold">{formatCurrency((data.despesas || []).reduce((s, d) => s + (Number(d?.valor) || 0), 0) || totalExpensesMonthly)}</span>
-                      </div>
-                    </div>
+                        </div>
+                      );
+                    })()
                   ) : (
                     <p className="text-xs text-muted-foreground">Sem detalhes cadastrados</p>
                   )}
@@ -276,23 +289,6 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, hideControls 
                 </div>
               </div>
 
-              {/* Indicadores: Poupança e Endividamento */}
-              <div className="mt-4 grid md:grid-cols-2 gap-4">
-                <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">% de Poupança</span>
-                    <span className="text-foreground font-medium">{poupancaPercent}%</span>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Excedente Mensal / Renda Mensal</div>
-                </div>
-                <div className="p-4 bg-muted/10 rounded-lg border border-border/50">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">% de Endividamento</span>
-                    <span className="text-foreground font-medium">{endividamentoPercent}%</span>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground mt-1">Cálculo: Total de Passivos / Total de Ativos</div>
-                </div>
-              </div>
             </div>
           </HideableCard>
         </div>

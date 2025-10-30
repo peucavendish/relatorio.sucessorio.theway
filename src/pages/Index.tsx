@@ -24,7 +24,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import SectionVisibilityControls from '@/components/layout/SectionVisibilityControls';
 import { useSectionVisibility } from '@/context/SectionVisibilityContext';
 import HideableSection from '@/components/ui/HideableSection';
-import SecurityIndicator from '@/components/sections/SecurityIndicator';
+import FinancialSecurityIndicator from '@/components/sections/FinancialSecurityIndicator';
 import LifeProjects from '@/components/sections/LifeProjects';
 
 interface IndexPageProps {
@@ -279,29 +279,6 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
                     idadeAposentadoria: getClientData().aposentadoria.idadeAposentadoria,
                   }}
                 >
-                  <SecurityIndicator
-                    scoreFinanceiro={{
-                      pilar: 'Total Geral',
-                      notaPonderada: userReports?.scoreFinanceiro?.find?.(s => s.Pilar === 'Total Geral')?.['Nota Ponderada'] ?? 0,
-                      elementosAvaliados: (userReports?.scoreFinanceiro || [])
-                        .filter((s: any) => s.Pilar && s.Pilar !== 'Total Geral')
-                        .sort((a: any, b: any) => {
-                          const order = [
-                            'Gestão de Ativos',
-                            'Aposentadoria',
-                            'Gestão de Riscos',
-                            'Planejamento Sucessório',
-                            'Gestão Tributária',
-                            'Organização Patrimonial'
-                          ];
-                          const ia = order.indexOf(a.Pilar);
-                          const ib = order.indexOf(b.Pilar);
-                          return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-                        })
-                        .map((s: any) => ({ nome: s.Pilar, nota: s['Nota'] }))
-                    }}
-                    hideControls={clientPropect}
-                  />
                 </CoverPage>
               </div>
 
@@ -338,6 +315,13 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
                   <LifeProjects data={getClientData()} hideControls={clientPropect} />
                 </HideableSection>
               )}
+
+              <HideableSection sectionId="financial-security-indicator" hideControls={clientPropect}>
+                <FinancialSecurityIndicator 
+                  scoreFinanceiro={userReports?.scoreFinanceiro || []} 
+                  hideControls={clientPropect} 
+                />
+              </HideableSection>
 
               {!clientPropect && (
                 <>

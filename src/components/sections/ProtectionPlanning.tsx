@@ -32,6 +32,11 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
   if (!protectionData) {
     return <div>Dados de proteção patrimonial não disponíveis</div>;
   }
+  
+  // Verificar idade do cliente
+  const idadeCliente = Number(data?.cliente?.idade || data?.aposentadoria?.idadeAtual || 0);
+  const idadeAcimaDe80 = idadeCliente > 80;
+  
   console.log(data);
   console.log('ok');
 
@@ -87,31 +92,31 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
           </div>
         </div>
 
-        {/* Insurance Needs Analysis (hidden) */}
-        {false && (
-          <HideableCard
-            id="analise-necessidades"
-            isVisible={isCardVisible("analise-necessidades")}
-            onToggleVisibility={() => toggleCardVisibility("analise-necessidades")}
-            hideControls={hideControls}
-            className="mb-10"
-          >
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Shield className="h-8 w-8 text-accent" />
-                <div>
-                  <CardTitle>Análise de Necessidades</CardTitle>
-                  <CardDescription>Avaliação de riscos e necessidades de proteção</CardDescription>
+        {/* Mensagem para clientes acima de 80 anos */}
+        {idadeAcimaDe80 && (
+          <Card className="mb-8 border-muted bg-muted/20">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-muted p-3 rounded-full">
+                  <Shield size={24} className="text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-2">Produtos de Seguro Não Aplicáveis</h3>
+                  <p className="text-muted-foreground">
+                    Devido à idade do cliente ({idadeCliente} anos), os produtos de seguro de vida e proteção tradicionalmente oferecidos não estão disponíveis para contratação. 
+                    A maioria das seguradoras limita a contratação para clientes até 80 anos de idade.
+                  </p>
+                  <p className="text-muted-foreground mt-3">
+                    Abaixo apresentamos a análise de custos sucessórios e recomendamos focar em estratégias de planejamento sucessório e estruturação patrimonial para garantir a proteção e transmissão eficiente do patrimônio aos herdeiros.
+                  </p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {/* conteúdo oculto */}
             </CardContent>
-          </HideableCard>
+          </Card>
         )}
 
-        {/* Seguros Existentes informados no JSON (exibe mesmo se vazio) */}
+        {/* Seguros Existentes informados no JSON - oculto para clientes acima de 80 anos */}
+        {!idadeAcimaDe80 && (
         <HideableCard
           id="seguros-existentes"
           isVisible={isCardVisible("seguros-existentes")}
@@ -159,13 +164,16 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
             )}
           </CardContent>
         </HideableCard>
+        )}
 
 
         {/* Grupo: Proteções em Caso de Falecimento */}
+        {!idadeAcimaDe80 && (
         <div className="mt-2 mb-6">
           <h3 className="card-title-standard text-lg">Proteções em Caso de Falecimento</h3>
           <p className="text-sm text-muted-foreground">Inclui planejamento sucessório e garantia de renda aos beneficiários.</p>
         </div>
+        )}
 
         {/* Módulo Unificado: Liquidez + Seguro Sucessório */}
         <HideableCard
@@ -301,14 +309,16 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
             })()}
 
             {/* Texto explicativo sobre liquidez e inventário */}
+            {!idadeAcimaDe80 && (
             <div className="mb-8 text-sm text-muted-foreground">
               <p>
                 Tanto a previdência privada (VGBL/PGBL) quanto o seguro de vida costumam ser pagos diretamente aos beneficiários, sem necessidade de inventário, oferecendo liquidez imediata para despesas e preservação do patrimônio. O seguro pode ser calibrado para cobrir o custo sucessório estimado, reduzindo ou eliminando o consumo de patrimônio no inventário.
               </p>
             </div>
+            )}
 
-            {/* Seguro de Vida (Garantia de Renda) - esconder no resumo */}
-            {!summaryMode && (
+            {/* Seguro de Vida (Garantia de Renda) - esconder no resumo e para clientes > 80 anos */}
+            {!summaryMode && !idadeAcimaDe80 && (
               <>
                 <div className="mt-6 mb-2 flex items-center gap-2">
                   <CircleDollarSign className="h-5 w-5 text-accent" />
@@ -628,7 +638,7 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
         </div>
         )}
 
-        {summaryMode && (
+        {summaryMode && !idadeAcimaDe80 && (
           <div className="mb-8 text-sm text-muted-foreground">
             <p>
               Nesta versão resumida destacamos o Seguro Sucessório para garantir liquidez e proteção aos herdeiros.
@@ -637,7 +647,6 @@ const ProtectionPlanning: React.FC<ProtectionPlanningProps> = ({ data, hideContr
             </p>
           </div>
         )}
-
 
       </div>
     </section>

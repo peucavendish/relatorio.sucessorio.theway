@@ -17,6 +17,16 @@ export async function getLiquidityEvents(sessionId: string) {
     const response = await api.get(`/clients/eventos-liquidez`, {
         params: { session_id: sessionId },
     });
+    
+    // Verificar se eventsLiquidity existe e é um array
+    if (!response.data || !response.data.eventsLiquidity) {
+        return [];
+    }
+    
+    if (!Array.isArray(response.data.eventsLiquidity)) {
+        return [];
+    }
+    
     return response.data.eventsLiquidity as LiquidityEventApi[];
 }
 

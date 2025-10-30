@@ -24,6 +24,7 @@ const ALL_SECTION_IDS = [
     "protection",                 // Proteção Patrimonial
     "succession",                 // Planejamento Sucessório
     "tax",                        // Planejamento Tributário
+    "financial-security-indicator", // Indicador de Segurança Financeira
     "action-plan",                // Plano de Ação
     "life-projects",              // Projetos de Vida
     "implementation-monitoring"   // Implementação e Monitoramento
@@ -150,7 +151,8 @@ export const SectionVisibilityProvider: React.FC<{ children: React.ReactNode }> 
                 // Ocultar seções para versão resumida
                 'beach-house': true,     // Aquisição de Imóveis
                 'succession': true,      // Planejamento Sucessório
-                'tax': true              // Planejamento Tributário
+                'tax': true,             // Planejamento Tributário
+                'financial-security-indicator': true  // Indicador de Segurança Financeira
             };
             setHiddenSections(newState);
             updateBackendState(newState);
