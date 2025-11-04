@@ -3,7 +3,6 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Sun, Moon, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSectionVisibility } from '@/context/SectionVisibilityContext';
 
 interface HeaderProps {
   title?: string;
@@ -15,7 +14,6 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ title, subtitle, showLogout = false, showSummaryToggle = true }) => {
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
-  const { summaryMode, setSummaryMode } = useSectionVisibility();
 
   const handleLogout = () => {
     logout();
@@ -51,25 +49,6 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle, showLogout = false, sh
           )}
         </div>
         <div className="flex items-center gap-2">
-          {showSummaryToggle && (
-            <div className="flex items-center rounded-md border border-border overflow-hidden">
-              <button
-                className={`px-3 py-1.5 text-xs sm:text-sm ${summaryMode ? 'bg-secondary text-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}
-                onClick={() => setSummaryMode(true)}
-                aria-pressed={summaryMode}
-              >
-                Versão Resumida
-              </button>
-              <div className="w-px h-6 bg-border" />
-              <button
-                className={`px-3 py-1.5 text-xs sm:text-sm ${!summaryMode ? 'bg-secondary text-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}
-                onClick={() => setSummaryMode(false)}
-                aria-pressed={!summaryMode}
-              >
-                Versão Completa
-              </button>
-            </div>
-          )}
           {showLogout && (
             <Button
               variant="ghost"

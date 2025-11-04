@@ -4,6 +4,7 @@ import { CardVisibilityProvider } from '@/context/CardVisibilityContext';
 import { SectionVisibilityProvider } from '@/context/SectionVisibilityContext';
 import Header from '@/components/layout/Header';
 import CoverPage from '@/components/sections/CoverPage';
+import CoverPageSucessorio from '@/components/sections/CoverPageSucessorio';
 import FinancialSummary from '@/components/sections/FinancialSummary';
 import RetirementPlanning from '@/components/sections/RetirementPlanning';
 import TotalAssetAllocation from '@/components/sections/TotalAssetAllocation';
@@ -11,6 +12,13 @@ import BeachHouse from '@/components/sections/BeachHouse';
 import TaxPlanning from '@/components/sections/TaxPlanning';
 import ProtectionPlanning from '@/components/sections/ProtectionPlanning';
 import SuccessionPlanning from '@/components/sections/SuccessionPlanning';
+import DiagnosticoSucessorio from '@/components/sections/DiagnosticoSucessorio';
+import PatrimonioSucessorio from '@/components/sections/PatrimonioSucessorio';
+import EstruturasExistentes from '@/components/sections/EstruturasExistentes';
+import EstrategiasRecomendadas from '@/components/sections/EstrategiasRecomendadas';
+import EstimativasRiscos from '@/components/sections/EstimativasRiscos';
+import ChecagemDocumental from '@/components/sections/ChecagemDocumental';
+import CronogramaSucessorio from '@/components/sections/CronogramaSucessorio';
 import ActionPlan from '@/components/sections/ActionPlan';
 import ImplementationMonitoring from '@/components/sections/ImplementationMonitoring';
 import FloatingActions from '@/components/layout/FloatingActions';
@@ -21,11 +29,200 @@ import PrintExportButton from '@/components/ui/PrintExportButton';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { formatCurrency } from '@/utils/formatCurrency';
-import SectionVisibilityControls from '@/components/layout/SectionVisibilityControls';
 import { useSectionVisibility } from '@/context/SectionVisibilityContext';
 import HideableSection from '@/components/ui/HideableSection';
 import FinancialSecurityIndicator from '@/components/sections/FinancialSecurityIndicator';
 import LifeProjects from '@/components/sections/LifeProjects';
+import { SuccessionPlanningData } from '@/types/successionPlanning';
+
+// Dados mockados para desenvolvimento e testes
+const MOCK_SUCCESSION_DATA: SuccessionPlanningData = {
+  meta: {
+    etapa: "Planejamento Sucessório",
+    status: "Concluído",
+    versao_modelo: "1.0.0",
+    data_execucao: "2025-10-31T00:00:00Z"
+  },
+  cliente: {
+    nome: "Cliente Exemplo",
+    estado_civil: "União estável",
+    regime_bens: "Não especificado",
+    data_casamento: "2022",
+    idade_conjuge: 36,
+    filhos: [
+      {
+        quantidade: 1,
+        idades: [3]
+      }
+    ],
+    herdeiros_vulneraveis: false,
+    beneficiarios_adicionais: {
+      tem: false,
+      descricao: null
+    }
+  },
+  patrimonio: {
+    imoveis: 3000000,
+    participacoes_societarias: 1000000,
+    investimentos_financeiros: 2000000,
+    previdencia_privada: null,
+    bens_exterior: null,
+    outros_bens: null,
+    dividas: 1000000,
+    residencia_fiscal: "Brasil",
+    bens_no_exterior: false,
+    herdeiros_no_exterior: false
+  },
+  estruturas_existentes: {
+    holding: true,
+    acordo_socios: false,
+    testamento: true,
+    doacoes_em_vida: false,
+    clausulas_restritivas: true,
+    mandato_preventivo: false
+  },
+  necessidade_liquidez: {
+    tem: true,
+    finalidade: "Cobrir custos da sucessão",
+    valor_estimado: null
+  },
+  riscos_sucessorios: {
+    litigio_familiar: false,
+    multiplos_nucleos: false,
+    imobilizacao_patrimonial: true
+  },
+  diagnostico: {
+    classificacao: "Moderado",
+    resumo: "Cliente com união estável e um herdeiro necessário. Patrimônio concentrado em imóveis e participações societárias, com risco de liquidez e ausência de instrumentos sucessórios formais.",
+    principais_pontos: [
+      "Filha é herdeira necessária",
+      "Cônjuge tem direito à meação",
+      "Ausência de testamento e holding",
+      "Risco de imobilização patrimonial",
+      "Necessidade de liquidez para cobrir sucessão"
+    ]
+  },
+  estrategias_recomendadas: [
+    {
+      situacao_identificada: "Ausência de testamento",
+      estrategia: "Testamento público com cláusulas específicas",
+      como_funciona: "Direciona a parte disponível e organiza cenários de convivência entre herdeiros",
+      impacto: "Evita disputas e preserva a vontade do cliente",
+      explicacao_contextual: "Como o cliente vive em união estável e possui uma filha menor, a ausência de testamento pode gerar disputas quanto à meação e herança. O testamento público assegura que a parte disponível seja distribuída conforme sua vontade e evita conflitos entre cônjuge e herdeira."
+    },
+    {
+      situacao_identificada: "Imobilização elevada",
+      estrategia: "Doações em vida com reserva de usufruto",
+      como_funciona: "Antecipação em vida mantendo controle e renda",
+      impacto: "Reduz incertezas e custos futuros",
+      explicacao_contextual: "Com parte relevante do patrimônio concentrada em imóveis e participações societárias, a antecipação de herança permite ao cliente organizar a sucessão gradualmente, mantendo controle e renda enquanto reduz custos de inventário."
+    },
+    {
+      situacao_identificada: "Necessidade de liquidez para sucessão",
+      estrategia: "Seguro de vida com finalidade sucessória",
+      como_funciona: "Define capital alvo para impostos, dívidas e manutenção da família",
+      impacto: "Garante liquidez imediata aos herdeiros",
+      explicacao_contextual: "O cliente possui financiamento e bens de baixa liquidez; o seguro de vida garante recursos imediatos para cobrir ITCMD e despesas do inventário sem comprometer o patrimônio."
+    },
+    {
+      situacao_identificada: "Proteção patrimonial intergeracional",
+      estrategia: "Cláusulas de inalienabilidade, incomunicabilidade e reversão",
+      como_funciona: "Protege o patrimônio de riscos jurídicos e conjugais",
+      impacto: "Preserva o patrimônio familiar",
+      explicacao_contextual: "Com herdeira menor e ausência de estruturas restritivas, a aplicação dessas cláusulas impede que o patrimônio transferido seja alienado ou atingido por futuras dívidas ou casamentos da herdeira."
+    }
+  ],
+  estimativas: {
+    custo_transmissao_percentual: "4–8%",
+    prazo_inventario: "1–3 anos",
+    liquidez_recomendada_percentual: 10,
+    observacoes: "Governança societária frágil — recomendada criação de acordo de sócios."
+  },
+  checagem_documental: [
+    {
+      documento: "Testamento público",
+      existe: false,
+      proximo_passo: "Redigir minuta com advogado"
+    },
+    {
+      documento: "Acordo de sócios e protocolo familiar",
+      existe: false,
+      proximo_passo: "Validar cláusulas de compra e venda de quotas"
+    },
+    {
+      documento: "Matrículas de imóveis",
+      existe: false,
+      proximo_passo: "Atualizar certidões e verificar gravames"
+    },
+    {
+      documento: "Apólice de seguro de vida",
+      existe: false,
+      proximo_passo: "Ajustar capital e beneficiários"
+    },
+    {
+      documento: "Cláusulas restritivas",
+      existe: false,
+      proximo_passo: "Preparar instrumentos com assessoria jurídica"
+    }
+  ],
+  cronograma: [
+    {
+      semana: "1–2",
+      acao: "Definir estratégia alvo e aprovar diretrizes",
+      responsavel: "Advisor e cliente",
+      status: "A fazer"
+    },
+    {
+      semana: "3–4",
+      acao: "Elaborar minutas de testamento e acordos",
+      responsavel: "Jurídico",
+      status: "A fazer"
+    },
+    {
+      semana: "5–6",
+      acao: "Estruturar holding e migração de ativos",
+      responsavel: "Jurídico e contábil",
+      status: "A fazer"
+    },
+    {
+      semana: "7–8",
+      acao: "Ajustar beneficiários e seguros de vida",
+      responsavel: "Advisor",
+      status: "A fazer"
+    },
+    {
+      semana: "9–12",
+      acao: "Execução documental e registros",
+      responsavel: "Cliente e cartório",
+      status: "A fazer"
+    }
+  ],
+  encerramento: {
+    resumo: "Cenário sucessório moderado com necessidade de planejamento para evitar riscos de liquidez e custos elevados.",
+    acoes_criticas: [
+      "Elaboração de testamento",
+      "Criação de acordo de sócios",
+      "Definição de cláusulas restritivas"
+    ],
+    prazo_execucao_dias: 90
+  },
+  seguro_vida: {
+    seguros_existentes: [],
+    cobertura_sugerida: 840000, // Exemplo: 14% do patrimônio líquido (6M - 1M dívidas) * 0.14
+    cobertura_minima: 500000,
+    descricao: "Cobertura para garantir liquidez imediata aos herdeiros e cobrir custos sucessórios estimados.",
+    riscos_protegidos: [
+      "Manutenção do Padrão de Vida",
+      "Educação dos Filhos",
+      "Pagamento de Dívidas",
+      "Custos Sucessórios",
+      "Sonhos e Projetos"
+    ],
+    despesas_mensais: 15000,
+    custo_anual: 180000,
+    meses_ate_aposentadoria: 56
+  }
+};
 
 interface IndexPageProps {
   accessor?: boolean;
@@ -37,6 +234,8 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [userReports, setUserReports] = useState(null);
+  const [successionData, setSuccessionData] = useState<SuccessionPlanningData | null>(null);
+  const [isSuccessionReport, setIsSuccessionReport] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
 
@@ -188,9 +387,18 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const sessionIdFromUrl = urlParams.get('sessionId');
+        const useMock = urlParams.get('mock') === 'true' || !sessionIdFromUrl;
+
+        // Usar dados mockados se não houver sessionId ou se mock=true na URL
+        if (useMock) {
+          setIsSuccessionReport(true);
+          setSuccessionData(MOCK_SUCCESSION_DATA);
+          setIsLoading(false);
+          return;
+        }
 
         if (sessionIdFromUrl) {
-          setSessionId(sessionIdFromUrl); // ← Definir o sessionId no estado
+          setSessionId(sessionIdFromUrl);
           const apiUrl = import.meta.env.VITE_API_THE_WAY;
           const response = await axios.get(`${apiUrl}/client-reports/${sessionIdFromUrl}`);
 
@@ -200,21 +408,41 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
             const output = base?.output ?? base;
             return output ?? {};
           };
-          setUserReports(normalizeReport(reportData));
+          
+          const normalized = normalizeReport(reportData);
+          
+          // Verificar se é um relatório de planejamento sucessório
+          if (normalized?.meta?.etapa === 'Planejamento Sucessório' || 
+              (normalized?.cliente?.estado_civil && normalized?.diagnostico && normalized?.estrategias_recomendadas)) {
+            setIsSuccessionReport(true);
+            setSuccessionData(normalized as SuccessionPlanningData);
+          } else {
+            setIsSuccessionReport(false);
+            setUserReports(normalized);
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        // Em caso de erro, usar dados mockados
+        setIsSuccessionReport(true);
+        setSuccessionData(MOCK_SUCCESSION_DATA);
       }
     };
     fetchUserReportsData();
   }, []);
 
   useEffect(() => {
+    // Se já temos dados (mockados), não precisa esperar
+    if (successionData || userReports) {
+      setIsLoading(false);
+      return;
+    }
+    
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [successionData, userReports]);
 
   // Componente interno que aplica a regra de auto-ocultar dentro do provider
   const AutoHideSections: React.FC<{ userReports: any }> = ({ userReports }) => {
@@ -257,6 +485,62 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
     );
   }
 
+  // Renderizar relatório de planejamento sucessório se detectado
+  if (isSuccessionReport && successionData) {
+    return (
+      <ThemeProvider>
+        <CardVisibilityProvider>
+          <SectionVisibilityProvider>
+            <div className="relative h-screen overflow-hidden">
+              <Header showLogout={!!clientPropect} showSummaryToggle={!clientPropect} />
+              <main className="h-[calc(100vh-64px)] overflow-y-auto">
+                <div className="min-h-screen">
+                  <CoverPageSucessorio 
+                    data={successionData} 
+                    clientName={successionData.cliente?.nome || ''}
+                  />
+                </div>
+
+                <HideableSection sectionId="diagnostico" hideControls={clientPropect}>
+                  <DiagnosticoSucessorio data={successionData} hideControls={clientPropect} />
+                </HideableSection>
+
+                <HideableSection sectionId="patrimonio" hideControls={clientPropect}>
+                  <PatrimonioSucessorio data={successionData} hideControls={clientPropect} />
+                </HideableSection>
+
+                <HideableSection sectionId="estruturas" hideControls={clientPropect}>
+                  <EstruturasExistentes data={successionData} hideControls={clientPropect} />
+                </HideableSection>
+
+                <HideableSection sectionId="estrategias" hideControls={clientPropect}>
+                  <EstrategiasRecomendadas data={successionData} hideControls={clientPropect} />
+                </HideableSection>
+
+                <HideableSection sectionId="estimativas-riscos" hideControls={clientPropect}>
+                  <EstimativasRiscos data={successionData} hideControls={clientPropect} />
+                </HideableSection>
+
+                <HideableSection sectionId="checagem-documental" hideControls={clientPropect}>
+                  <ChecagemDocumental data={successionData} hideControls={clientPropect} />
+                </HideableSection>
+
+                <HideableSection sectionId="cronograma" hideControls={clientPropect}>
+                  <CronogramaSucessorio data={successionData} hideControls={clientPropect} />
+                </HideableSection>
+              </main>
+              <DotNavigation clientMode={!!clientPropect} />
+              <MobileDotNavigation clientMode={!!clientPropect} />
+              {!clientPropect && <FloatingActions userReports={successionData} />}
+              {!clientPropect && <PrintExportButton />}
+            </div>
+          </SectionVisibilityProvider>
+        </CardVisibilityProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Renderizar relatório padrão (planejamento patrimonial completo)
   return (
     <ThemeProvider>
       <CardVisibilityProvider>
@@ -339,7 +623,6 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
             <DotNavigation clientMode={!!clientPropect} />
             <MobileDotNavigation clientMode={!!clientPropect} />
             {!clientPropect && <FloatingActions userReports={userReports} />}
-            {!clientPropect && <SectionVisibilityControls />}
             {!clientPropect && <PrintExportButton />}
           </div>
         </SectionVisibilityProvider>
