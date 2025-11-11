@@ -41,25 +41,25 @@ const IndexSucessorio: React.FC<IndexSucessorioProps> = ({ accessor, clientPrope
         if (sessionIdFromUrl) {
           setSessionId(sessionIdFromUrl);
           const apiUrl = import.meta.env.VITE_API_THE_WAY;
-          const response = await axios.get(`${apiUrl}/client-reports/${sessionIdFromUrl}`);
+          const response = await axios.get(`${apiUrl}/sucessorio-reports/${sessionIdFromUrl}`);
 
           const reportData = JSON.parse(response.data[0].report_data);
-          
+
           // Normalizar o JSON (pode vir em diferentes formatos)
           const normalizeReport = (raw: any): SuccessionPlanningData | null => {
             const base = Array.isArray(raw) ? raw[0] : raw;
             const output = base?.output ?? base;
-            
+
             // Verificar se tem a estrutura de planejamento sucessório
             if (output?.meta?.etapa === 'Planejamento Sucessório' || output?.cliente?.estado_civil) {
               return output as SuccessionPlanningData;
             }
-            
+
             return null;
           };
 
           const normalized = normalizeReport(reportData);
-          
+
           if (normalized) {
             setSuccessionData(normalized);
             // Tentar obter o nome do cliente se disponível
@@ -73,7 +73,7 @@ const IndexSucessorio: React.FC<IndexSucessorioProps> = ({ accessor, clientPrope
         console.error('Error fetching succession data:', error);
       }
     };
-    
+
     fetchSuccessionData();
   }, []);
 
@@ -100,8 +100,8 @@ const IndexSucessorio: React.FC<IndexSucessorioProps> = ({ accessor, clientPrope
             <Header showLogout={!!clientPropect} showSummaryToggle={!clientPropect} />
             <main className="h-[calc(100vh-64px)] overflow-y-auto">
               <div className="min-h-screen">
-                <CoverPageSucessorio 
-                  data={successionData} 
+                <CoverPageSucessorio
+                  data={successionData}
                   clientName={clientName}
                 />
               </div>
@@ -146,4 +146,3 @@ const IndexSucessorio: React.FC<IndexSucessorioProps> = ({ accessor, clientPrope
 };
 
 export default IndexSucessorio;
-

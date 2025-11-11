@@ -400,7 +400,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
         if (sessionIdFromUrl) {
           setSessionId(sessionIdFromUrl);
           const apiUrl = import.meta.env.VITE_API_THE_WAY;
-          const response = await axios.get(`${apiUrl}/client-reports/${sessionIdFromUrl}`);
+          const response = await axios.get(`${apiUrl}/sucessorio-reports/${sessionIdFromUrl}`);
 
           const reportData = JSON.parse(response.data[0].report_data);
           const normalizeReport = (raw: any) => {
@@ -408,11 +408,11 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
             const output = base?.output ?? base;
             return output ?? {};
           };
-          
+
           const normalized = normalizeReport(reportData);
-          
+
           // Verificar se é um relatório de planejamento sucessório
-          if (normalized?.meta?.etapa === 'Planejamento Sucessório' || 
+          if (normalized?.meta?.etapa === 'Planejamento Sucessório' ||
               (normalized?.cliente?.estado_civil && normalized?.diagnostico && normalized?.estrategias_recomendadas)) {
             setIsSuccessionReport(true);
             setSuccessionData(normalized as SuccessionPlanningData);
@@ -437,7 +437,7 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
       setIsLoading(false);
       return;
     }
-    
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -495,8 +495,8 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
               <Header showLogout={!!clientPropect} showSummaryToggle={!clientPropect} />
               <main className="h-[calc(100vh-64px)] overflow-y-auto">
                 <div className="min-h-screen">
-                  <CoverPageSucessorio 
-                    data={successionData} 
+                  <CoverPageSucessorio
+                    data={successionData}
                     clientName={successionData.cliente?.nome || ''}
                   />
                 </div>
@@ -601,9 +601,9 @@ const IndexPage: React.FC<IndexPageProps> = ({ accessor, clientPropect }) => {
               )}
 
               <HideableSection sectionId="financial-security-indicator" hideControls={clientPropect}>
-                <FinancialSecurityIndicator 
-                  scoreFinanceiro={userReports?.scoreFinanceiro || []} 
-                  hideControls={clientPropect} 
+                <FinancialSecurityIndicator
+                  scoreFinanceiro={userReports?.scoreFinanceiro || []}
+                  hideControls={clientPropect}
                 />
               </HideableSection>
 
